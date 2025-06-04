@@ -32,16 +32,39 @@ class PageObject:
         self.url = ""
         self.locators = Locators(self.page)
 
+    def click_below_and_right_of_element(self, locator: Locator, offset_x=0, offset_y=-10, timeout=None):
+        """
+        点击指定元素的右下方（相对于元素边界框）。
+
+        :param locator: 元素定位器
+        :param offset_x: 向右偏移量（像素）
+        :param offset_y: 向下偏移量（像素）
+        :param timeout: 超时时间（毫秒）
+        """
+        # 获取元素的边界框信息
+        box = locator.first.bounding_box(timeout=timeout)
+
+        # 计算目标点击坐标
+        x = box['x'] + box['width'] + offset_x
+        y = box['y'] + box['height'] + offset_y
+
+        # 移动鼠标并点击
+        self.page.mouse.move(x, y)
+        self.page.mouse.click(x, y)
     def navigate(self):
         self.page.goto(self.url)
 
     def table(self, 唯一文字, 表格序号=-1):
         return Table(self.page, 唯一文字, 表格序号)
 
-    def click_button(self, button_name, timeout=30_000):
-        button_loc = self.page.locator("button")
+    def click_button(self, button_name, timeout=30_000, 按钮的父元素:Locator =None):
+        if 按钮的父元素 is not None:
+            button_loc = 按钮的父元素.locator("button")
+        else:
+            button_loc = self.page.locator("button")
         for 单字符 in button_name:
             button_loc = button_loc.filter(has_text=单字符)
+        button_loc = button_loc.locator("visible=true")
         button_loc.click(timeout=timeout)
 
     def search(self, 搜索内容: str, placeholder=None):
@@ -55,18 +78,46 @@ class PageObject:
 
     # 该函数在会议室管理系统中测试通过
     def 表单_文本框填写(self, 表单项名称: str, 需要填写的文本: str, 表单最上层定位: Locator = None,
-                        timeout: float = None):
+                        timeout: float = 8000):
+        if 需要填写的文本 is None:
+            return
         if 表单最上层定位:
-            表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
-                "input,textarea").locator("visible=true").last.fill(需要填写的文本, timeout=timeout)
+            # 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
+            #     "input,textarea").locator("visible=true").last.fill(需要填写的文本, timeout=timeout)
+            # 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
+            #     "input,textarea").locator("visible=true").last.type(需要填写的文本)
+            loc_输入框 = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
+                "input,textarea").locator("visible=true").last
+
         else:
-            self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("input,textarea").locator(
-                "visible=true").last.fill(需要填写的文本, timeout=timeout)
+            # self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("input,textarea").locator(
+            #     "visible=true").last.fill(需要填写的文本, timeout=timeout)
+            loc_输入框 = self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("input,textarea").locator(
+                "visible=true").last
+        # 点击输入框
+        loc_输入框.click()
+        # 清空内容
+        loc_输入框.clear()
+        # 聚焦输入框
+        loc_输入框.focus()
+        # 逐字符输入内容
+        loc_输入框.press_sequentially(需要填写的文本, delay=0,timeout=timeout)
 
     # 该函数在会议室管理系统中测试通过
     def 表单_下拉框选择(self, 表单项名称: str, 需要选择的项: str, 表单最上层定位: Locator = None,
                         timeout: float = None):
+        if 需要选择的项 is None:
+            return
+
         if 表单最上层定位:
+            表单项 = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
+                "visible=true")
+            if 需要选择的项 == "":
+                表单项.hover()
+                关闭按钮 = 表单项.locator(".el-icon-circle-close")
+                if 关闭按钮.count()>0:
+                    关闭按钮.click()
+                    return
             表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
                 "visible=true").click(timeout=timeout)
             if 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
@@ -77,6 +128,13 @@ class PageObject:
             self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(
                 timeout=timeout)
         else:
+            表单项 = self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("visible=true")
+            if 需要选择的项 == "":
+                表单项.hover()
+                关闭按钮 = 表单项.locator(".el-icon-circle-close")
+                if 关闭按钮.count()>0:
+                    关闭按钮.click()
+                    return
             self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("visible=true").click(timeout=timeout)
             if self.locators.表单项中包含操作元素的最上级div(表单项名称).locator('//input[@type="search"]').count():
                 self.locators.表单项中包含操作元素的最上级div(表单项名称).locator('//input[@type="search"]').fill(
@@ -84,7 +142,7 @@ class PageObject:
             # self.page.locator(".ant-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(timeout=timeout)
             self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(
                 timeout=timeout)
-        expect(self.page.locator(".el-select-dropdown")).to_be_hidden(timeout=timeout)
+        expect(self.page.locator(".el-select-dropdown").locator("visible=true")).to_be_hidden(timeout=timeout)
 
     def 表单_级联选择器选择(self, 表单项名称: str, 路径: str, 表单最上层定位: Locator = None, timeout: float = None):
         """
@@ -95,6 +153,9 @@ class PageObject:
         :param 表单最上层定位: 如果在弹窗或嵌套容器中，传入该容器的 Locator
         :param timeout: 操作超时时间
         """
+        if 路径 is None:
+            return
+
         分段路径 = 路径.split("/")
 
         if 表单最上层定位:
@@ -103,6 +164,12 @@ class PageObject:
         else:
             表单元素 = self.locators.表单项中包含操作元素的最上级div(表单项名称)
 
+        if 路径 == "":
+            表单元素.hover()
+            关闭按钮 = 表单元素.locator(".el-icon-circle-close")
+            if 关闭按钮.count() > 0:
+                关闭按钮.click()
+            return
         # 打开级联选择器
         表单元素.locator("input.el-input__inner").click(timeout=timeout)
 
@@ -123,28 +190,123 @@ class PageObject:
             else:
                 # 点击找到的菜单项，带有超时设置
                 item_locator.click(timeout=timeout)
-        self.page.mouse.click(x=10, y=10)
         # 等待级联选择面板关闭
-        expect(dropdown).to_be_hidden(timeout=timeout or 5000)
+        expect(dropdown).to_be_hidden(timeout=1000)
+        if dropdown.is_visible():
+            # 若级联面板仍然可见，则点击它附近的一个坐标位置，让它消失
+            # self.click_below_and_right_of_element(dropdown, offset_x=0, offset_y=500)
+            表单元素.click()
 
-    # def 表单_日期_element(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None, timeout: float = None):
+    def 表单_日期时间选择器(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None, timeout: float = None):
+        """
+        填写基于 Element Plus 的 el-date-picker 控件的日期表单项（通过点击选择）。
+
+        :param 表单项名称: 表单项标签名，例如 "开始时间"
+        :param 日期: 日期字符串，支持如下格式：
+                     - 单个日期："2025-04-05" 或 "2025-04-05 14:30"（未来打算支持这种，目前还不行）
+        :param 表单最上层定位: 如果在弹窗或嵌套容器中，传入该容器的 Locator
+        :param timeout: 超时时间（毫秒）
+        """
+
+        from datetime import datetime
+        if 日期 is None:
+            return
+        if 表单最上层定位:
+            date_picker = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称))
+        else:
+            date_picker = self.locators.表单项中包含操作元素的最上级div(表单项名称)
+
+        if 日期 == "":
+            date_picker.hover()
+            关闭按钮 = date_picker.locator(".el-icon-circle-close")
+            if 关闭按钮.count() > 0:
+                关闭按钮.click()
+                return
+
+        # 点击打开日期选择面板
+        date_picker.locator("input").first.click(timeout=timeout)
+
+        # 获取当前显示的日期面板
+        picker_panel = self.page.locator(".el-picker-panel").locator("visible=true")
+
+        单日期 = 日期
+        try:
+            days_offset = int(单日期)
+            格式化后的日期 = 返回当前时间xxxx_xx_xx加N天(days_offset)
+        except ValueError:
+            格式化后的日期 = 单日期
+
+        # 将日期拆分为年、月、日
+        dt = datetime.strptime(格式化后的日期, "%Y-%m-%d")
+        year = dt.year
+        month = dt.month
+        day = dt.day
+
+        # 点击年份标题进入年份选择器（如果未展开）
+        picker_panel.locator(".el-date-picker__header-label", has_text="年").click(timeout=timeout)
+
+        上一页按钮 = picker_panel.locator(".el-date-picker__prev-btn").locator("visible=true")
+        下一页按钮 = picker_panel.locator(".el-date-picker__next-btn").locator("visible=true")
+        当前年份区间 = picker_panel.locator(".el-date-picker__header-label", has_text="年").inner_html()
+        # 当前年份区间为1990年-2020年这种格式，把两个年份拆分出来，要把年这个字去除掉
+        拆开后的年份区间 = [i.replace("年", "") for i in 当前年份区间.split("-")]
+        区间的开始年份 = int(拆开后的年份区间[0])
+        区间的结束年份 = int(拆开后的年份区间[1])
+
+        while year < 区间的开始年份:
+            上一页按钮.click()
+            当前年份区间 = picker_panel.locator(".el-date-picker__header-label", has_text="年").inner_html()
+            # 当前年份区间为1990年-2020年这种格式，把两个年份拆分出来，要把年这个字去除掉
+            拆开后的年份区间 = [i.replace("年", "") for i in 当前年份区间.split("-")]
+            区间的开始年份 = int(拆开后的年份区间[0])
+            区间的结束年份 = int(拆开后的年份区间[1])
+        while year > 区间的结束年份:
+            下一页按钮.click()
+            当前年份区间 = picker_panel.locator(".el-date-picker__header-label", has_text="年").inner_html()
+            # 当前年份区间为1990年-2020年这种格式，把两个年份拆分出来，要把年这个字去除掉
+            拆开后的年份区间 = [i.replace("年", "") for i in 当前年份区间.split("-")]
+            区间的开始年份 = int(拆开后的年份区间[0])
+            区间的结束年份 = int(拆开后的年份区间[1])
+
+        # 选择年份
+        picker_panel.locator(".el-year-table td a", has_text=str(year)).click(timeout=timeout)
+
+        # 选择月份
+        picker_panel.locator(".el-month-table td div a", has_text=f"{数字月份转中文(month)}月").click(timeout=timeout)
+
+        # 选择具体日期
+        picker_panel.locator(".el-date-table .available span", has_text=str(day)).first.click(timeout=timeout)
+
+    # def 表单_日期范围选择器_左右面板联动(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None, timeout: float = None):
     #     """
-    #     填写基于 Element Plus 的 el-date-picker 控件的日期表单项。
+    #     填写基于 Element Plus 的 el-date-picker 控件的日期表单项（通过点击选择）。
     #
     #     :param 表单项名称: 表单项标签名，例如 "开始时间"
     #     :param 日期: 日期字符串，支持如下格式：
-    #                  - 单个日期："2025-04-05" 或 "2025-04-05 14:30"
-    #                  - 范围日期："2025-04-05,2025-04-10" 或 "2025-04-05 14:30,2025-04-10 18:00"
+    #                  - 范围日期时间："2025-04-05 03:02:00,2025-04-10 05:20:35"
     #     :param 表单最上层定位: 如果在弹窗或嵌套容器中，传入该容器的 Locator
     #     :param timeout: 超时时间（毫秒）
     #     """
+    #     if 日期 is None:
+    #         return
+    #
+    #     from datetime import datetime
     #
     #     if 表单最上层定位:
     #         date_picker = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称))
     #     else:
     #         date_picker = self.locators.表单项中包含操作元素的最上级div(表单项名称)
     #
-    #     # 点击打开日期选择面板
+    #     if 日期 == "":
+    #         # 清空表单项
+    #         # 将鼠标悬停到表单项上
+    #         date_picker.hover()
+    #         清空按钮 = date_picker.locator(".el-range__close-icon")
+    #         # 若出现了清空按钮，则点击清空按钮
+    #         if 清空按钮.count() > 0:
+    #             清空按钮.click(timeout=timeout)
+    #         return
+    #     # 打开日期选择面板
     #     date_picker.locator("input").first.click(timeout=timeout)
     #
     #     # 获取当前显示的日期面板
@@ -153,6 +315,12 @@ class PageObject:
     #     # 解析输入日期
     #     日期列表 = 日期.split(",")
     #
+    #     # 定位控制按钮
+    #     上一年按钮 = picker_panel.locator("button.el-icon-d-arrow-left").locator("visible=true")
+    #     下一年按钮 = picker_panel.locator("button.el-icon-d-arrow-right").locator("visible=true")
+    #     上一月按钮 = picker_panel.locator("button.el-icon-arrow-left").locator("visible=true")
+    #     下一月按钮 = picker_panel.locator("button.el-icon-arrow-right").locator("visible=true")
+    #
     #     for index, 单日期 in enumerate(日期列表):
     #         try:
     #             days_offset = int(单日期)
@@ -160,110 +328,50 @@ class PageObject:
     #         except ValueError:
     #             格式化后的日期 = 单日期
     #
-    #         # 定位到对应的日期输入框并填充
-    #         date_input = picker_panel.locator(".el-date-range-picker__editor input").nth(index) if len(日期列表) > 1 \
-    #             else date_picker.locator(".el-date-editor input")
+    #         dt = datetime.strptime(格式化后的日期, "%Y-%m-%d %H:%M:%S")
+    #         target_year = dt.year
+    #         target_month = dt.month
+    #         target_day = dt.day
     #
-    #         date_input.fill(格式化后的日期, timeout=timeout)
+    #         # 左右面板定位器
+    #         date_tables = picker_panel.locator(".el-date-table")
     #
-    #     # 点击确认按钮关闭日期选择器
-    #     picker_panel.get_by_text("确定").click(timeout=timeout or 3000)
-
-    def 表单_日期范围选择器_左右面板联动(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None, timeout: float = None):
-        """
-        填写基于 Element Plus 的 el-date-picker 控件的日期表单项（通过点击选择）。
-
-        :param 表单项名称: 表单项标签名，例如 "开始时间"
-        :param 日期: 日期字符串，支持如下格式：
-                     - 范围日期时间："2025-04-05 03:02:00,2025-04-10 05:20:35"
-        :param 表单最上层定位: 如果在弹窗或嵌套容器中，传入该容器的 Locator
-        :param timeout: 超时时间（毫秒）
-        """
-        if 日期 is None:
-            return
-
-        from datetime import datetime
-
-        if 表单最上层定位:
-            date_picker = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称))
-        else:
-            date_picker = self.locators.表单项中包含操作元素的最上级div(表单项名称)
-
-        if 日期 == "":
-            # 清空表单项
-            # 将鼠标悬停到表单项上
-            date_picker.hover()
-            清空按钮 = date_picker.locator(".el-range__close-icon")
-            # 若出现了清空按钮，则点击清空按钮
-            if 清空按钮.count() > 0:
-                清空按钮.click(timeout=timeout)
-            return
-        # 打开日期选择面板
-        date_picker.locator("input").first.click(timeout=timeout)
-
-        # 获取当前显示的日期面板
-        picker_panel = self.page.locator(".el-picker-panel").locator("visible=true")
-
-        # 解析输入日期
-        日期列表 = 日期.split(",")
-
-        # 定位控制按钮
-        上一年按钮 = picker_panel.locator("button.el-icon-d-arrow-left").locator("visible=true")
-        下一年按钮 = picker_panel.locator("button.el-icon-d-arrow-right").locator("visible=true")
-        上一月按钮 = picker_panel.locator("button.el-icon-arrow-left").locator("visible=true")
-        下一月按钮 = picker_panel.locator("button.el-icon-arrow-right").locator("visible=true")
-
-        for index, 单日期 in enumerate(日期列表):
-            try:
-                days_offset = int(单日期)
-                格式化后的日期 = 返回当前时间xxxx_xx_xx加N天(days_offset)
-            except ValueError:
-                格式化后的日期 = 单日期
-
-            dt = datetime.strptime(格式化后的日期, "%Y-%m-%d %H:%M:%S")
-            target_year = dt.year
-            target_month = dt.month
-            target_day = dt.day
-
-            # 左右面板定位器
-            date_tables = picker_panel.locator(".el-date-table")
-
-            # 判断是哪个面板需要调整（index == 0 为开始时间，index == 1 为结束时间）
-            panel_index = 0 if index == 0 or len(日期列表) == 1 else 1
-
-            while True:
-                # 等待年月标签出现（最多等待 timeout 毫秒）
-                start_time = time.time()
-                while (time.time() - start_time) < (timeout or 5000) / 1000:
-                    month_labels = picker_panel.locator("div:not([class])", has_text="年").filter(has_text="月").all()
-                    if len(month_labels) > panel_index:
-                        break
-                    time.sleep(0.2)
-                else:
-                    raise TimeoutError(f"超时：未找到足够的年份标签，期望至少 {panel_index + 1} 个")
-
-                # 获取当前面板的年月
-                current_label = month_labels[panel_index].inner_html()
-                年份_str, 月份_str = current_label.split("年")
-                current_year = int(年份_str)
-                current_month = int(月份_str.replace("月", ""))
-
-                # 如果已经匹配，跳出循环
-                if current_year == target_year and current_month == target_month:
-                    break
-
-                # 控制面板切换
-                if current_year > target_year:
-                    上一年按钮.first.click(timeout=timeout)
-                elif current_year < target_year:
-                    下一年按钮.first.click(timeout=timeout)
-                elif current_year == target_year and current_month > target_month:
-                    上一月按钮.first.click(timeout=timeout)
-                elif current_year == target_year and current_month < target_month:
-                    下一月按钮.first.click(timeout=timeout)
-            # 在对应面板中选择日期
-            date_tables.nth(panel_index).locator(".available span", has_text=str(target_day)).first.click(
-                timeout=timeout)
+    #         # 判断是哪个面板需要调整（index == 0 为开始时间，index == 1 为结束时间）
+    #         panel_index = 0 if index == 0 or len(日期列表) == 1 else 1
+    #
+    #         while True:
+    #             # 等待年月标签出现（最多等待 timeout 毫秒）
+    #             start_time = time.time()
+    #             while (time.time() - start_time) < (timeout or 5000) / 1000:
+    #                 month_labels = picker_panel.locator("div:not([class])", has_text="年").filter(has_text="月").all()
+    #                 if len(month_labels) > panel_index:
+    #                     break
+    #                 time.sleep(0.2)
+    #             else:
+    #                 raise TimeoutError(f"超时：未找到足够的年份标签，期望至少 {panel_index + 1} 个")
+    #
+    #             # 获取当前面板的年月
+    #             current_label = month_labels[panel_index].inner_html()
+    #             年份_str, 月份_str = current_label.split("年")
+    #             current_year = int(年份_str)
+    #             current_month = int(月份_str.replace("月", ""))
+    #
+    #             # 如果已经匹配，跳出循环
+    #             if current_year == target_year and current_month == target_month:
+    #                 break
+    #
+    #             # 控制面板切换
+    #             if current_year > target_year:
+    #                 上一年按钮.first.click(timeout=timeout)
+    #             elif current_year < target_year:
+    #                 下一年按钮.first.click(timeout=timeout)
+    #             elif current_year == target_year and current_month > target_month:
+    #                 上一月按钮.first.click(timeout=timeout)
+    #             elif current_year == target_year and current_month < target_month:
+    #                 下一月按钮.first.click(timeout=timeout)
+    #         # 在对应面板中选择日期
+    #         date_tables.nth(panel_index).locator(".available span", has_text=str(target_day)).first.click(
+    #             timeout=timeout)
 
     def _select_time_in_picker(self, time_panel: Locator, time_info: dict, timeout: float = None):
         hour_str = f"{time_info['hour']:02d}"
@@ -448,6 +556,47 @@ class PageObject:
         if 确定按钮.is_visible():
             确定按钮.click(timeout=timeout)
 
+    def 表单_文件上传(self, 表单项名称: str, 文件路径: str, 表单最上层定位: Locator = None, timeout: float = None):
+        """
+        在指定表单项中上传文件。
+
+        :param 表单项名称: 表单项标签名，如 "附件"
+        :param 文件路径: 要上传的文件的本地路径（绝对路径）
+        :param 表单最上层定位: 如果在弹窗或嵌套容器中，传入该容器的 Locator
+        :param timeout: 操作超时时间（毫秒）
+        """
+        if 文件路径 is None:
+            return
+
+        if 表单最上层定位:
+            # 注意：这个input元素不是一个可见元素，不要对其进行可见性过滤
+            表单项中包含操作元素的最上级div = 表单最上层定位.locator(
+                self.locators.表单项中包含操作元素的最上级div(表单项名称))
+            file_input = 表单项中包含操作元素的最上级div.locator("input[type='file']").first
+        else:
+            表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项名称)
+            file_input = 表单项中包含操作元素的最上级div.locator("input[type='file']").first
+
+        # 清空该表单项
+        if 文件路径 == "":
+            # 遍历已上传文件列表，点击所有的删除按钮
+            已上传文件列表 = 表单项中包含操作元素的最上级div.locator("ul li")
+            if 已上传文件列表.count()>0:
+                for 已上传文件列表项 in 已上传文件列表.all():
+                    已上传文件列表项.hover()
+                    关闭按钮 = 已上传文件列表项.locator(".el-icon-delete")
+                    if 关闭按钮.count() > 0:
+                        关闭按钮.click(timeout=timeout)
+            return
+
+        # 尝试上传文件
+        try:
+            print(f"开始上传文件：{文件路径}")
+            file_input.set_input_files(文件路径, timeout=timeout)
+            print("文件上传成功")
+        except Exception as e:
+            pytest.fail(f"上传失败：{str(e)}")
+
     def 表单_radio选择(self, 表单项名称: str, 需要选择的项: str, 表单最上层定位: Locator = None, timeout: float = None):
         if 表单最上层定位:
             表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator("label").locator(
@@ -468,25 +617,11 @@ class PageObject:
             self.locators.表单项中包含操作元素的最上级div(表单项名称).get_by_role("switch").set_checked(开关状态bool,
                                                                                                         timeout=timeout)
 
-    def 表单_日期(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None, timeout: float = None):
-        if 表单最上层定位:
-            日期控件定位 = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称))
-        else:
-            日期控件定位 = self.locators.表单项中包含操作元素的最上级div(表单项名称)
-        日期列表 = 日期.split(",")
-        for index, 单日期 in enumerate(日期列表):
-            try:
-                int(单日期)
-                格式化后的日期 = 返回当前时间xxxx_xx_xx加N天(int(单日期))
-            except:
-                格式化后的日期 = 单日期
-            日期控件定位.locator("input").nth(index).click(timeout=timeout)
-            日期控件定位.locator("input").nth(index).fill(格式化后的日期, timeout=timeout)
-            日期控件定位.locator("input").nth(index).blur(timeout=timeout)
-
     def 快捷操作_填写表单(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
         for 表单项, 内容 in kwargs.items():
-            if not 内容:
+            # if not 内容:
+            #     continue
+            if 内容 is None:
                 continue
             elif self.locators.表单项中包含操作元素的最上级div(表单项).locator(".ant-input").count():
                 self.表单_文本框填写(表单项名称=表单项, 需要填写的文本=内容, 表单最上层定位=表单最上层定位,
@@ -505,25 +640,30 @@ class PageObject:
                 pytest.fail(f"不支持的快捷表单填写:\n{表单项}:{内容}")
 
     def 快捷操作_填写表单_增加根据数据类确定唯一表单版(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
+        # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
         页面上已有的表单项列表 = []
         已经有唯一表单项 = False
         if 表单最上层定位:
+            # 这个判断逻辑的最终目的是得到一个处理后的表单最上层定位，可以通过代码自动寻找，但是有些情况下就是不大好找，可以手动传递到入参里
             处理后的表单最上层定位 = 表单最上层定位
         else:
             for index, 表单项 in enumerate(kwargs.keys()):
                 if index == 0:
+                    # 这里尝试去找第一个表单项，一般情况下第一个表单项的文本是固定的，但不排除特殊情况，所以这里写了try，若找不到，就等一段时间
                     try:
                         self.locators.表单项中包含操作元素的最上级div(表单项).last.wait_for(timeout=timeout)
                     except:
                         pass
 
                 if self.locators.表单项中包含操作元素的最上级div(表单项).count() == 0:
+                    # 查看是否找到，没找到，则跳过，找下一个
                     continue
                 else:
                     if self.locators.表单项中包含操作元素的最上级div(表单项).count() == 1:
                         已经有唯一表单项 = True
                     页面上已有的表单项列表.append(self.locators.表单项中包含操作元素的最上级div(表单项))
                 if 已经有唯一表单项 and len(页面上已有的表单项列表) >= 2:
+                    # 这里只要找到一个唯一的表单项，并且页面上已经有2个表单项，通过这两个表单项的共同祖先便可以唯一确定表单最上层定位了，所以，可以退出循环
                     break
 
             包含可见表单项的loc = self.page.locator("*")
@@ -532,25 +672,46 @@ class PageObject:
             if 已经有唯一表单项:
                 处理后的表单最上层定位 = 包含可见表单项的loc.last
             else:
+                # 从多个候选的表单容器中，选择一个“最紧凑”的定位器（即文本内容最少的那个）作为最终操作的目标表单容器。
                 处理后的表单最上层定位 = min(包含可见表单项的loc.all(), key=lambda loc: len(loc.text_content()))
+                # for loc in 包含可见表单项的loc.all():
+                #     loc.highlight()
+                #     print(loc.text_content())
 
         for 表单项, 内容 in kwargs.items():
-            if not 内容:
+            # if not 内容:
+            #     continue
+            if 内容 is None:
                 continue
-            if self.locators.表单项中包含操作元素的最上级div(表单项).locator(".ant-input").count():
+            # if self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(
+            #         ".el-input").count():
+            #     self.表单_文本框填写(表单项名称=表单项, 需要填写的文本=内容, 表单最上层定位=处理后的表单最上层定位,
+            #                          timeout=timeout)
+            # 若该元素不是下拉框、级联选择器等其他类型，则认为它是文本框
+            if self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-select,.el-cascader,.el-date-editor--date, .el-date-editor--datetime,.el-date-editor--datetimerange, .el-upload").count()==0:
                 self.表单_文本框填写(表单项名称=表单项, 需要填写的文本=内容, 表单最上层定位=处理后的表单最上层定位,
-                                     timeout=timeout)
-            elif self.locators.表单项中包含操作元素的最上级div(表单项).locator(".ant-select-selector").count():
+                                     timeout=8000)
+            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-select").count():
                 self.表单_下拉框选择(表单项名称=表单项, 需要选择的项=内容, 表单最上层定位=处理后的表单最上层定位,
                                      timeout=timeout)
-            elif self.locators.表单项中包含操作元素的最上级div(表单项).locator(".ant-radio-group").count():
-                self.表单_radio选择(表单项名称=表单项, 需要选择的项=内容, 表单最上层定位=处理后的表单最上层定位,
-                                    timeout=timeout)
-            elif self.locators.表单项中包含操作元素的最上级div(表单项).get_by_role("switch").count():
-                self.表单_switch开关(表单项名称=表单项, 开关状态=内容, 表单最上层定位=处理后的表单最上层定位,
+            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-cascader").count():
+                self.表单_级联选择器选择(表单项名称=表单项, 路径=内容, 表单最上层定位=处理后的表单最上层定位,
                                      timeout=timeout)
-            elif self.locators.表单项中包含操作元素的最上级div(表单项).locator(".ant-picker").count():
-                self.表单_日期(表单项名称=表单项, 日期=内容, 表单最上层定位=处理后的表单最上层定位, timeout=timeout)
+            # elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".ant-radio-group").count():
+            #     self.表单_radio选择(表单项名称=表单项, 需要选择的项=内容, 表单最上层定位=处理后的表单最上层定位,
+            #                         timeout=timeout)
+            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-date-editor--date, .el-date-editor--datetime").count():
+                self.表单_日期时间选择器(表单项名称=表单项, 日期=内容, 表单最上层定位=处理后的表单最上层定位,
+                                    timeout=timeout)
+            # elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).get_by_role("switch").count():
+            #     self.表单_switch开关(表单项名称=表单项, 开关状态=内容, 表单最上层定位=处理后的表单最上层定位,
+            #                          timeout=timeout)
+            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-date-editor--datetimerange").count():
+                self.表单_日期时间范围选择器_左右面板联动(表单项名称=表单项, 日期=内容, 表单最上层定位=处理后的表单最上层定位,
+                                     timeout=timeout)
+            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-upload").count():
+                self.表单_文件上传(表单项名称=表单项, 文件路径=内容, 表单最上层定位=处理后的表单最上层定位,
+                                    timeout=timeout)
             else:
                 pytest.fail(f"不支持的快捷表单填写:\n{表单项}:{内容}")
 
@@ -566,36 +727,28 @@ if __name__ == '__main__':
         page = context.pages[0] if context.pages else context.new_page()
         page.set_default_timeout(3000)  # 设置默认超时时间为 3000 毫秒
         page = PageObject(page)
-        # page.表单_文本框填写("会议室名称","测试会议室")
-        # page.表单_下拉框选择("会议室状态","正常")
-        # page.表单_下拉框选择("设备", "电视")
-        # page.表单_下拉框选择("当前状态", "正常")
-        # page.表单_下拉框选择("审批", "是")
-        # page.表单_下拉框选择("审批", "是")
-        # page.表单_级联选择器选择("管理部门","集成公司/省DICT研发中心/产品需求团队")
-        # page.表单_级联选择器选择("管理人","集成公司/省DICT研发中心/产品需求团队")
 
-        # # 单个日期
-        # page.表单_日期_element("发布日期", "1825-04-05")
-        #
-        # # 单个日期
-        # page.表单_日期_element("发布日期", "2725-04-05")
+        # page.表单_文本框填写("心愿内容","")
+
+        # page.表单_日期时间选择器('发布时间', '')
+
+        # page.表单_下拉框选择("网格员","")
+
+        # page.表单_级联选择器选择("选择居委会", "中电数智街道/中电数智社区（演示）")
 
         # 日期范围
         # page.表单_日期范围选择器_左右面板联动("公开时间", "2060-07-05,2060-08-29")
         # page.表单_日期范围选择器_左右面板联动("公开时间", "")
-
         # page.表单_日期时间范围选择器_左右面板联动("发布日期", "2060-07-05,2060-08-29")
         # page.表单_日期时间范围选择器_左右面板联动("公开时间", "2060-07-05,2060-08-29")
-        page.表单_日期时间范围选择器_左右面板联动("发布日期", "2060-07-05 02:30:59,2060-07-14 17:08:26")
+
+        # 日期时间范围
+        # page.表单_日期时间范围选择器_左右面板联动("发布日期", "2060-07-05 02:30:59,2060-07-14 17:08:26")
         # page.表单_日期时间范围选择器_左右面板联动("发布日期", "2060-07-05 10:20:40,2060-07-14 17:08:26")
 
-        # 单个日期 + 时间
-        # page.表单_日期_element("发布日期", "2025-04-05 14:30")
-        #
-        #
-        #
-        # # 日期时间范围
-        # page.表单_日期_element("发布日期", "2025-04-05 14:30,2025-04-10 18:00")
+        # page.快捷操作_填写表单({"发布面向对象":"合肥市/庐阳区/中电数智街道/中电数智小区/金城小区", "标题关键词":"啦啦啦"})
+        # page.快捷操作_填写表单_增加根据数据类确定唯一表单版(发布面向对象="合肥市/庐阳区/中电数智街道/中电数智小区/金城小区", 标题关键词="啦啦啦")
+
+        page.快捷操作_填写表单_增加根据数据类确定唯一表单版(标题="党务", 状态="未上架")
 
         # page.wait_for_timeout(10000)

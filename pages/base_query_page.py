@@ -1,5 +1,6 @@
 # 数据库中的数据可能有datetime类型的，需要做处理
 from abc import abstractmethod
+from collections import OrderedDict
 from datetime import datetime
 from playwright.sync_api import expect
 
@@ -22,8 +23,12 @@ class BaseQueryPage:
         # 若下一页按钮可用，则点击下一页按钮
         if self.get_next_button().is_visible():
             self.get_next_button().click()
+            # 等待表格内容更新，使用显示等待
             # 等待表格更新，但是这段代码在1.40.0的playwright中似乎不支持
-            expect(self.get_table_rows()).to_have_count(count_gt=0)
+            # expect(self.get_table_rows()).to_have_count(count_gt=0)
+            # expect(self.get_table_rows()).to_be_visible(timeout=2000)
+            # expect(self.get_next_button()).to_be_enabled(timeout=2000)
+
 
 
     @abstractmethod
@@ -49,9 +54,27 @@ class BaseQueryPage:
                 self.click_next_button()
                 # 等待1秒，让表格内容刷新
                 self.page.wait_for_timeout(1000)
+                try:
+                    expect(self.get_next_button()).to_be_enabled(timeout=1000)
+                except Exception as e:
+                    continue
+
             else:
                 # 退出循环
                 break
+
+        # while True:
+        #     # 此处，使用列表推导式进行了优化，避免使用双重for循环
+        #     rows = self.get_table_rows().all()
+        #     # 遍历所有行，将每一行的数据添加到列表中
+        #     data.extend([row.locator("td").all_text_contents()[:-1] for row in rows])
+        #     total_rows_count += len(rows)
+        #     # 若下一页按钮可用，则点击下一页按钮
+        #     self.click_next_button()
+        #     try:
+        #         expect(self.get_next_button()).to_be_enabled(timeout=2000)
+        #     except:
+        #         break
 
         return data, total_rows_count
 
@@ -83,10 +106,25 @@ class BaseQueryPage:
         :return: 查询结果列表
         """
         # 获取数据库游标
-        with connection.cursor(dictionary=True) as cursor:
+        # with connection.cursor(dictionary=True) as cursor: # mysql-connector-python
+        with connection.cursor() as cursor: # pymysql
+
             try:
+                params = ('1', '安徽数字生活')
+                query = """
+                            SELECT a.*,b.xm as wyxm,b.sjhm as wysjhm FROM base_village a 
+                            LEFT JOIN ( SELECT * FROM base_village_staff WHERE id in ( SELECT max(id) FROM base_village_staff WHERE ryjsdm = "0101" OR ryjsdm = "01" GROUP BY xqbm)) b 
+                            ON a.xqbm = b.xqbm where a.sqdm like '%%340103225%%' and a.type = %s AND a.xqmc LIKE CONCAT('%', %s,'%' )
+                        """
+                # 将普通字典转换为有序字典
+                # ordered_params = OrderedDict(params) if params else None
+                # sql = cursor.mogrify(query, ordered_params)
+                sql = cursor.mogrify(query, params)
+                print("执行的SQL:", sql)  # 打印拼接后的 SQL
+
                 cursor.execute(query, params)  # 使用参数化查询
                 db_data = cursor.fetchall() # 获取查询结果
+
             except Exception as e:
                 print(f"Database error: {e}")
                 db_data = []
@@ -136,6 +174,12 @@ class BaseQueryPage:
             print("数据库数据条数", len(db_list))
             return False
 
+    def get_reset_btn(self):
+        """获取重置按钮"""
+        return self.page.get_by_role("button", name="重置")
+    def click_reset_btn(self):
+        """点击重置按钮"""
+        self.get_reset_btn().click()
 
 
 

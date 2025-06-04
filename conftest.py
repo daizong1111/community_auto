@@ -4,6 +4,7 @@ from pages.login_page import LoginPage
 from pages.home_page import HomePage
 import logging
 import mysql.connector
+import pymysql
 from pages.meeting_room_manage.meeting_room_manage_page import MeetingRoomManagePageBase
 from tests.test_meeting_manage.test_meeting_room_manage import TestAddMeetingRoom
 
@@ -67,14 +68,22 @@ def meeting_manage_page(logged_in_page):
 @pytest.fixture(scope="session")
 def db_connection():
    # 创建数据库连接
-   db_config = {
-       "host": "134.84.202.60",
-       "port": "53306",
-       "user": "root",
-       "password": "Djmysqltest@2023",
-       "database": "smartwork_meeting"
-   }
-   connection = mysql.connector.connect(**db_config)
+   # db_config = {
+   #     "host": "114.96.83.242",
+   #     "port": "8306",
+   #     "user": "root",
+   #     "password": "Dxjc@2020",
+   #     "database": "chinaictc_sc_common_pre"
+   # }
+   # connection = mysql.connector.connect(**db_config)
+   connection = pymysql.connect(
+       host="114.96.83.242",
+       user="root",
+       port=8306,
+       password="Dxjc@2020",
+       database="chinaictc_sc_common_pre",
+       cursorclass=pymysql.cursors.DictCursor  # 如果你需要字典格式结果
+   )
    yield connection  # 返回连接对象
    # 测试结束后关闭连接
    connection.close()
@@ -96,12 +105,17 @@ def meeting_room_manage_edit_and_del_pre(meeting_room_manage_page, db_connection
              ["集成公司", "省DICT研发中心", "项目管理办公室", "刘富豪"], True)
     yield meeting_room_manage_page
 
-# 前置和后置操作-用于测试查询功能
+
 @pytest.fixture(scope="function")
-def meeting_room_manage_query(meeting_room_manage_page):
-    # 返回会议室管理页面对象
-    yield meeting_room_manage_page
+def 后置操作_刷新页面(小区信息页面):
+    yield 小区信息页面
+    # 刷新
+    小区信息页面.page.reload()
+
+@pytest.fixture(scope="function")
+def 后置操作_重置查询条件(小区信息页面):
+    yield 小区信息页面
     # 执行完用例之后，点击重置按钮，清空查询条件
-    meeting_room_manage_page.click_reset_btn()
+    小区信息页面.click_reset_btn()
 
 

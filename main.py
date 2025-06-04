@@ -19,7 +19,9 @@ def run_tests():
                    # '--alluredir=allure-results',
                    # 执行指定的用例文件(不写则执行所有的用例)
                    # 'tests/test_meeting_manage/test_meeting_room_manage.py',
-                   'tests/test_meeting_manage/test_meeting_room_manage.py::TestAddMeetingRoom',
+                   # 'tests/test_meeting_manage/test_meeting_room_manage.py::TestAddMeetingRoom',
+                   'tests/test_基础信息/test_实有房屋',
+
                    # 'tests/test_meeting_manage/test_meeting_room_manage.py::TestDeleteMeetingRoom',
                    # 'tests/test_meeting_manage/test_meeting_room_manage.py::TestEditMeetingRoom::test_edit_meeting_room_miss_data',
                    # 'tests/test_meeting_manage/test_meeting_room_manage.py::TestQueryMeetingRoom'

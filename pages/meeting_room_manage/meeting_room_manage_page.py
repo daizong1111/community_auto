@@ -250,7 +250,7 @@ class MeetingRoomManagePageBase(BaseQueryPage):
 
     def get_reset_btn(self):
         # 重置按钮
-        return self.page.locator("//span[text()=' 重置']")
+        return self.page.locator("//span[text()=' 重置 ']")
 
     def click_reset_btn(self):
         # 点击重置按钮
