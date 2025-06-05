@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from collections import OrderedDict
 from datetime import datetime
-from playwright.sync_api import expect
+from playwright.sync_api import expect, Locator
 
 """查询页面基类，封装了查询操作相关的所有功能"""
 class BaseQueryPage:
@@ -110,17 +110,8 @@ class BaseQueryPage:
         with connection.cursor() as cursor: # pymysql
 
             try:
-                params = ('1', '安徽数字生活')
-                query = """
-                            SELECT a.*,b.xm as wyxm,b.sjhm as wysjhm FROM base_village a 
-                            LEFT JOIN ( SELECT * FROM base_village_staff WHERE id in ( SELECT max(id) FROM base_village_staff WHERE ryjsdm = "0101" OR ryjsdm = "01" GROUP BY xqbm)) b 
-                            ON a.xqbm = b.xqbm where a.sqdm like '%%340103225%%' and a.type = %s AND a.xqmc LIKE CONCAT('%', %s,'%' )
-                        """
-                # 将普通字典转换为有序字典
-                # ordered_params = OrderedDict(params) if params else None
-                # sql = cursor.mogrify(query, ordered_params)
-                sql = cursor.mogrify(query, params)
-                print("执行的SQL:", sql)  # 打印拼接后的 SQL
+                # sql = cursor.mogrify(query, params)
+                # print("执行的SQL:", sql)  # 打印拼接后的 SQL
 
                 cursor.execute(query, params)  # 使用参数化查询
                 db_data = cursor.fetchall() # 获取查询结果
@@ -180,6 +171,76 @@ class BaseQueryPage:
     def click_reset_btn(self):
         """点击重置按钮"""
         self.get_reset_btn().click()
+
+    def 获取编辑按钮(self, 关键字):
+        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",has_text=关键字).first.locator("button", has_text="编辑")
+
+    def 点击编辑按钮(self, 关键字):
+        self.获取编辑按钮(关键字).evaluate("(el) => el.click()")
+
+    def 获取详情按钮(self, 关键字):
+        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",has_text=关键字).first.locator("button", has_text="详情")
+
+    def 点击详情按钮(self, 关键字):
+        self.获取详情按钮(关键字).evaluate("(el) => el.click()")
+
+    def 获取删除按钮(self, 关键字):
+        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",has_text=关键字).first.locator("button", has_text="删除")
+
+    def 点击删除按钮(self, 关键字):
+        self.获取删除按钮(关键字).evaluate("(el) => el.click()")
+
+    def 校验详情页数据与修改后数据一致(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
+        # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
+        页面上已有的表单项列表 = []
+        已经有唯一表单项 = False
+        if 表单最上层定位:
+            # 这个判断逻辑的最终目的是得到一个处理后的表单最上层定位，可以通过代码自动寻找，但是有些情况下就是不大好找，可以手动传递到入参里
+            处理后的表单最上层定位 = 表单最上层定位
+        else:
+            for index, 表单项 in enumerate(kwargs.keys()):
+                if index == 0:
+                    # 这里尝试去找第一个表单项，一般情况下第一个表单项的文本是固定的，但不排除特殊情况，所以这里写了try，若找不到，就等一段时间
+                    try:
+                        self.locators.表单项中包含操作元素的最上级div(表单项).last.wait_for(timeout=timeout)
+                    except:
+                        pass
+
+                if self.locators.表单项中包含操作元素的最上级div(表单项).count() == 0:
+                    # 查看是否找到，没找到，则跳过，找下一个
+                    continue
+                else:
+                    if self.locators.表单项中包含操作元素的最上级div(表单项).count() == 1:
+                        已经有唯一表单项 = True
+                    页面上已有的表单项列表.append(self.locators.表单项中包含操作元素的最上级div(表单项))
+                if 已经有唯一表单项 and len(页面上已有的表单项列表) >= 2:
+                    # 这里只要找到一个唯一的表单项，并且页面上已经有2个表单项，通过这两个表单项的共同祖先便可以唯一确定表单最上层定位了，所以，可以退出循环
+                    break
+
+            包含可见表单项的loc = self.page.locator("*")
+            for 已有表单项_loc in 页面上已有的表单项列表:
+                包含可见表单项的loc = 包含可见表单项的loc.filter(has=已有表单项_loc)
+            if 已经有唯一表单项:
+                处理后的表单最上层定位 = 包含可见表单项的loc.last
+            else:
+                # 从多个候选的表单容器中，选择一个“最紧凑”的定位器（即文本内容最少的那个）作为最终操作的目标表单容器。
+                处理后的表单最上层定位 = min(包含可见表单项的loc.all(), key=lambda loc: len(loc.text_content()))
+                # for loc in 包含可见表单项的loc.all():
+                #     loc.highlight()
+                #     print(loc.text_content())
+
+        for 表单项, 内容 in kwargs.items():
+            # if not 内容:
+            #     continue
+            if 内容 is None:
+                continue
+
+            内容_表单项 = self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator('input').input_value()
+            print(内容_表单项)
+            # assert 内容_表单项 == 内容, f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
+
+
+
 
 
 

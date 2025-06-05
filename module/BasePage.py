@@ -102,6 +102,10 @@ class PageObject:
         loc_输入框.focus()
         # 逐字符输入内容
         loc_输入框.press_sequentially(需要填写的文本, delay=0,timeout=timeout)
+        # loc_输入框.type(需要填写的文本, delay=0)
+        # 使用键盘操作 输入回车键
+        # loc_输入框.press("Enter")
+        # self.page.keyboard.press("Enter")
 
     # 该函数在会议室管理系统中测试通过
     def 表单_下拉框选择(self, 表单项名称: str, 需要选择的项: str, 表单最上层定位: Locator = None,
@@ -117,7 +121,7 @@ class PageObject:
                 关闭按钮 = 表单项.locator(".el-icon-circle-close")
                 if 关闭按钮.count()>0:
                     关闭按钮.click()
-                    return
+                return
             表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
                 "visible=true").click(timeout=timeout)
             if 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
@@ -125,7 +129,7 @@ class PageObject:
                 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
                     '//input[@type="search"]').fill(需要选择的项, timeout=timeout)
             # self.page.locator(".ant-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(timeout=timeout)
-            self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(
+            self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项,exact=True).click(
                 timeout=timeout)
         else:
             表单项 = self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("visible=true")
@@ -134,13 +138,13 @@ class PageObject:
                 关闭按钮 = 表单项.locator(".el-icon-circle-close")
                 if 关闭按钮.count()>0:
                     关闭按钮.click()
-                    return
+                return
             self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("visible=true").click(timeout=timeout)
             if self.locators.表单项中包含操作元素的最上级div(表单项名称).locator('//input[@type="search"]').count():
                 self.locators.表单项中包含操作元素的最上级div(表单项名称).locator('//input[@type="search"]').fill(
                     需要选择的项, timeout=timeout)
             # self.page.locator(".ant-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(timeout=timeout)
-            self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(
+            self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项,exact=True).click(
                 timeout=timeout)
         expect(self.page.locator(".el-select-dropdown").locator("visible=true")).to_be_hidden(timeout=timeout)
 
@@ -190,12 +194,15 @@ class PageObject:
             else:
                 # 点击找到的菜单项，带有超时设置
                 item_locator.click(timeout=timeout)
-        # 等待级联选择面板关闭
-        expect(dropdown).to_be_hidden(timeout=1000)
-        if dropdown.is_visible():
-            # 若级联面板仍然可见，则点击它附近的一个坐标位置，让它消失
-            # self.click_below_and_right_of_element(dropdown, offset_x=0, offset_y=500)
-            表单元素.click()
+        # # 等待级联面板关闭
+        # self.page.wait_for_timeout(500)
+        # # 若选择了与之前相同的选项，面板不会关闭，需点击表单项，让它关闭
+        # if dropdown.is_visible():
+        #     # 若级联面板仍然可见，则点击它附近的一个坐标位置，让它消失
+        #     # self.click_below_and_right_of_element(dropdown, offset_x=0, offset_y=500)
+        #     表单元素.click()
+
+
 
     def 表单_日期时间选择器(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None, timeout: float = None):
         """

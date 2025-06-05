@@ -54,5 +54,13 @@ class PageCommunity(PageObject, BaseQueryPage):
         # 定位表格中的所有行
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody/tr")
 
+    def 验证搜索框内容被重置(self):
+        内容_搜索框_小区类型 = self.locators.表单项中包含操作元素的最上级div("小区类型").locator('input').input_value()
+        内容_搜索框_管理类别 = self.locators.表单项中包含操作元素的最上级div("管理类别").locator('input').input_value()
+        内容_搜索框_小区名称 = self.locators.表单项中包含操作元素的最上级div("小区名称").locator('input').input_value()
+        assert 内容_搜索框_小区类型 == "全部" and 内容_搜索框_管理类别 == "全部" and 内容_搜索框_小区名称 == ""
+
+
+
 
 

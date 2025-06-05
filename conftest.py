@@ -10,6 +10,23 @@ from tests.test_meeting_manage.test_meeting_room_manage import TestAddMeetingRoo
 
 """存放UI自动化测试过程中用到的测试夹具"""
 
+# 测试夹具-获取浏览器当前打开页面，并返回 MeetingRoomManagePageBase 对象
+@pytest.fixture(scope="function")
+def 浏览器已打开的页面():
+    with sync_playwright() as playwright:
+        # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")
+        # 通过ip和端口连接到已经打开的chromium浏览器
+        browser = playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
+        # 若浏览器已打开，则直接使用已打开的浏览器，否则创建一个新的浏览器实例
+        context = browser.contexts[0] if browser.contexts else browser.new_context()
+        # 若该浏览器中有页面，则直接使用已打开的页面，否则创建一个新的页面
+        page = context.pages[0] if context.pages else context.new_page()
+        page.set_default_timeout(6000)  # 设置默认超时时间为 4000 毫秒
+        # # 创建小区信息页面对象
+        # page = PageFloor(page)
+        # 返回会议室管理页面对象
+        yield page
+
 # 定义Playwright fixture，用于初始化Playwright实例
 @pytest.fixture(scope="session")
 def playwright() -> Playwright:
@@ -88,29 +105,29 @@ def db_connection():
    # 测试结束后关闭连接
    connection.close()
 
-# 前置操作-用于测试编辑和删除功能，保证表格中一定有数据
-@pytest.fixture(scope="function")
-def meeting_room_manage_edit_and_del_pre(meeting_room_manage_page, db_connection):
-    # 等待3秒，防止表格尚未加载出来，导致计算出的表格行数为0
-    meeting_room_manage_page.page.wait_for_timeout(3000)
-    # 统计表格行数
-    rows_count = meeting_room_manage_page.get_table_rows().count()
-    if rows_count == 0:
-        # 新增一条数据
-        test_add_meeting_room = TestAddMeetingRoom()
-        test_add_meeting_room.test_add_meeting_room_success(meeting_room_manage_page, db_connection, "新增-成功", "HYS10-506", "10", "天王巷", "正常", ["投影仪"],
-             ["集成公司", "省DICT研发中心", "项目管理办公室"], "刘富豪/17356523872", "会议室很大，能容纳很多人", True,
-             "刘富豪/17356523872", True,
-             ["星期一", "星期二", "星期三"], "08:30", "10:30", "24",
-             ["集成公司", "省DICT研发中心", "项目管理办公室", "刘富豪"], True)
-    yield meeting_room_manage_page
+# # 前置操作-用于测试编辑和删除功能，保证表格中一定有数据
+# @pytest.fixture(scope="function")
+# def 小区信息页面(meeting_room_manage_page, db_connection):
+#     # 等待3秒，防止表格尚未加载出来，导致计算出的表格行数为0
+#     meeting_room_manage_page.page.wait_for_timeout(3000)
+#     # 统计表格行数
+#     rows_count = meeting_room_manage_page.get_table_rows().count()
+#     if rows_count == 0:
+#         # 新增一条数据
+#         test_add_meeting_room = TestAddMeetingRoom()
+#         test_add_meeting_room.test_add_meeting_room_success(meeting_room_manage_page, db_connection, "新增-成功", "HYS10-506", "10", "天王巷", "正常", ["投影仪"],
+#              ["集成公司", "省DICT研发中心", "项目管理办公室"], "刘富豪/17356523872", "会议室很大，能容纳很多人", True,
+#              "刘富豪/17356523872", True,
+#              ["星期一", "星期二", "星期三"], "08:30", "10:30", "24",
+#              ["集成公司", "省DICT研发中心", "项目管理办公室", "刘富豪"], True)
+#     yield meeting_room_manage_page
 
 
 @pytest.fixture(scope="function")
-def 后置操作_刷新页面(小区信息页面):
-    yield 小区信息页面
+def 后置操作_刷新页面(浏览器已打开的页面):
+    yield 浏览器已打开的页面
     # 刷新
-    小区信息页面.page.reload()
+    浏览器已打开的页面.reload()
 
 @pytest.fixture(scope="function")
 def 后置操作_重置查询条件(小区信息页面):
