@@ -110,8 +110,8 @@ class BaseQueryPage:
         with connection.cursor() as cursor: # pymysql
 
             try:
-                # sql = cursor.mogrify(query, params)
-                # print("执行的SQL:", sql)  # 打印拼接后的 SQL
+                sql = cursor.mogrify(query, params)
+                print("执行的SQL:", sql)  # 打印拼接后的 SQL
 
                 cursor.execute(query, params)  # 使用参数化查询
                 db_data = cursor.fetchall() # 获取查询结果
@@ -236,8 +236,8 @@ class BaseQueryPage:
                 continue
 
             内容_表单项 = self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator('input').input_value()
-            print(内容_表单项)
-            # assert 内容_表单项 == 内容, f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
+            # print(内容_表单项)
+            assert 内容_表单项 == 内容, f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
 
 
 

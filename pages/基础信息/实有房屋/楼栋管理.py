@@ -57,11 +57,28 @@ class PageFloor(PageObject, BaseQueryPage):
         # 定位表格中的所有行
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody/tr")
 
-    # def 验证搜索框内容被重置(self):
-    #     内容_搜索框_小区类型 = self.locators.表单项中包含操作元素的最上级div("小区类型").locator('input').input_value()
-    #     内容_搜索框_管理类别 = self.locators.表单项中包含操作元素的最上级div("管理类别").locator('input').input_value()
-    #     内容_搜索框_小区名称 = self.locators.表单项中包含操作元素的最上级div("小区名称").locator('input').input_value()
-    #     assert 内容_搜索框_小区类型 == "全部" and 内容_搜索框_管理类别 == "全部" and 内容_搜索框_小区名称 == ""
+    def 验证搜索框内容被重置(self):
+        内容_搜索框_选择小区 = self.locators.表单项中包含操作元素的最上级div("选择小区").locator('input').input_value()
+        内容_搜索框_楼栋号 = self.locators.表单项中包含操作元素的最上级div("楼栋号").locator('input').input_value()
+        内容_搜索框_楼栋名称 = self.locators.表单项中包含操作元素的最上级div("楼栋名称").locator('input').input_value()
+        assert 内容_搜索框_选择小区 == "" and 内容_搜索框_楼栋号 == "" and 内容_搜索框_楼栋名称 == ""
+
+    def 获取楼栋信息表单(self):
+        return self.page.locator('//div[@aria-label="楼栋信息"]')
+
+    def 验证编辑表单的可交互性(self):
+        表单项_小区名称 = self.locators.表单项中包含操作元素的最上级div("小区名称", 处理后的表单最上层定位=self.获取楼栋信息表单()).locator("input,textarea")
+        表单项_楼栋号 = self.locators.表单项中包含操作元素的最上级div("楼栋号", 处理后的表单最上层定位=self.获取楼栋信息表单()).locator("input,textarea")
+        # 断言输入框不可交互
+        assert not 表单项_小区名称.is_editable() and not 表单项_楼栋号.is_editable()
+
+    def 获取提示弹窗(self):
+        return self.page.locator(".el-message-box")
+    def 获取提示弹窗中的确定按钮(self):
+        return self.获取提示弹窗().locator("button", has_text="确定")
+
+    def 点击提示弹窗中的确定按钮(self):
+        self.获取提示弹窗中的确定按钮().click()
 
 
 

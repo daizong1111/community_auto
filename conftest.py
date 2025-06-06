@@ -1,5 +1,8 @@
 import pytest
 from playwright.sync_api import Playwright, sync_playwright, Page
+
+from module.BasePage import PageObject
+from pages.base_query_page import BaseQueryPage
 from pages.login_page import LoginPage
 from pages.home_page import HomePage
 import logging
@@ -122,6 +125,10 @@ def db_connection():
 #              ["集成公司", "省DICT研发中心", "项目管理办公室", "刘富豪"], True)
 #     yield meeting_room_manage_page
 
+@pytest.fixture(scope="function")
+def 查询页面(浏览器已打开的页面):
+    查询页面 = BaseQueryPage(浏览器已打开的页面)
+    yield 查询页面
 
 @pytest.fixture(scope="function")
 def 后置操作_刷新页面(浏览器已打开的页面):
@@ -130,9 +137,9 @@ def 后置操作_刷新页面(浏览器已打开的页面):
     浏览器已打开的页面.reload()
 
 @pytest.fixture(scope="function")
-def 后置操作_重置查询条件(小区信息页面):
-    yield 小区信息页面
+def 后置操作_重置查询条件(查询页面):
+    yield 查询页面
     # 执行完用例之后，点击重置按钮，清空查询条件
-    小区信息页面.click_reset_btn()
+    查询页面.click_reset_btn()
 
 
