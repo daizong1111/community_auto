@@ -1,7 +1,7 @@
 from playwright.sync_api import Page
 
 from module.BasePage import PageObject
-from pages.base_query_page import BaseQueryPage
+from module.base_query_page import BaseQueryPage
 
 
 class PageCommunity(PageObject, BaseQueryPage):

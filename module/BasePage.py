@@ -3,7 +3,6 @@ import time
 import pytest
 from playwright.sync_api import Locator, Page, expect, sync_playwright
 
-from module import *
 from module.table import Table
 from module.locators import Locators
 from utils.my_date import *
@@ -24,6 +23,22 @@ def 数字月份转中文(month: int) -> str:
         12: "十二"
     }
     return 月份映射.get(month, str(month))
+def paste_text(locator: Locator, text: str):
+    """
+    使用剪贴板 + 快捷键方式模拟粘贴
+    :param locator: 输入框定位器
+    :param text: 要粘贴的内容
+    """
+    page = locator.page
+    # 将文本写入剪贴板
+    page.evaluate(f"navigator.clipboard.writeText('{text}')")
+    # 聚焦输入框
+    locator.focus()
+    # 执行粘贴快捷键
+    if page.platform == "mac":
+        locator.press("Meta+V")
+    else:
+        locator.press("Control+V")
 
 
 class PageObject:
@@ -94,6 +109,7 @@ class PageObject:
             #     "visible=true").last.fill(需要填写的文本, timeout=timeout)
             loc_输入框 = self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("input,textarea").locator(
                 "visible=true").last
+        # loc_输入框.fill(需要填写的文本, timeout=timeout)
         # 点击输入框
         loc_输入框.click()
         # 清空内容
@@ -102,10 +118,8 @@ class PageObject:
         loc_输入框.focus()
         # 逐字符输入内容
         loc_输入框.press_sequentially(需要填写的文本, delay=0,timeout=timeout)
-        # loc_输入框.type(需要填写的文本, delay=0)
-        # 使用键盘操作 输入回车键
-        # loc_输入框.press("Enter")
-        # self.page.keyboard.press("Enter")
+        # 让元素失去焦点，必须加，否则某些输入框输入内容后会自动清空
+        loc_输入框.blur()
 
     # 该函数在会议室管理系统中测试通过
     def 表单_下拉框选择(self, 表单项名称: str, 需要选择的项: str, 表单最上层定位: Locator = None,
@@ -129,7 +143,7 @@ class PageObject:
                 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
                     '//input[@type="search"]').fill(需要选择的项, timeout=timeout)
             # self.page.locator(".ant-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(timeout=timeout)
-            self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项,exact=True).click(
+            self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项,exact=True).first.click(
                 timeout=timeout)
         else:
             表单项 = self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("visible=true")
@@ -144,7 +158,7 @@ class PageObject:
                 self.locators.表单项中包含操作元素的最上级div(表单项名称).locator('//input[@type="search"]').fill(
                     需要选择的项, timeout=timeout)
             # self.page.locator(".ant-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(timeout=timeout)
-            self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项,exact=True).click(
+            self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项,exact=True).first.click(
                 timeout=timeout)
         expect(self.page.locator(".el-select-dropdown").locator("visible=true")).to_be_hidden(timeout=timeout)
 
@@ -185,8 +199,8 @@ class PageObject:
             # 定位到当前层级的菜单列表
             menu_list = dropdown.locator(f".el-cascader-menu:nth-child({index + 1}) .el-cascader-menu__list")
             # 在当前菜单列表中找到含有指定节点文本的第一个菜单项
-            item_locator = menu_list.locator(".el-cascader-node", has_text=节点).first
-            # item_locator = menu_list.get_by_role("menuitem", exact=True).filter(has_text=节点).first
+            item_locator = menu_list.get_by_text(节点, exact=True).first
+            # item_locator = menu_list.locator(".el-cascader-node", has_text=节点).first
             # 先尝试找 checkbox/radio
             checkbox = item_locator.locator("label").first
             if checkbox.count() > 0:
@@ -194,13 +208,8 @@ class PageObject:
             else:
                 # 点击找到的菜单项，带有超时设置
                 item_locator.click(timeout=timeout)
-        # # 等待级联面板关闭
-        # self.page.wait_for_timeout(500)
-        # # 若选择了与之前相同的选项，面板不会关闭，需点击表单项，让它关闭
-        # if dropdown.is_visible():
-        #     # 若级联面板仍然可见，则点击它附近的一个坐标位置，让它消失
-        #     # self.click_below_and_right_of_element(dropdown, offset_x=0, offset_y=500)
-        #     表单元素.click()
+
+        # 不需要再点击空白位置让面板关闭，因为操作下一项的时候面板会自动关闭
 
 
 
@@ -388,21 +397,31 @@ class PageObject:
         # 选择小时
         hour_spinner = time_panel.locator(".el-time-spinner__list").nth(0).locator(".el-time-spinner__item",
                                                                                    has_text=hour_str).first
-        hour_spinner.scroll_into_view_if_needed(timeout=timeout)
-        # hour_spinner.click(timeout=timeout)
+        hour_next_str = str(f"{int(hour_str)+1:02d}")
+        hour_spinner_next = time_panel.locator(".el-time-spinner__list").nth(0).locator(".el-time-spinner__item",
+                                                                                   has_text=hour_next_str).first
+        # 必须滚动下一个小时可见，否则点击可能失败
+        hour_spinner_next.scroll_into_view_if_needed(timeout=timeout)
+        hour_spinner.click(timeout=timeout)
 
         # 选择分钟
         minute_spinner = time_panel.locator(".el-time-spinner__list").nth(1).locator(".el-time-spinner__item",
                                                                                      has_text=minute_str).first
-        minute_spinner.scroll_into_view_if_needed(timeout=timeout)
-        # minute_spinner.click(timeout=timeout)
+        minute_next_str = str(f"{int(minute_str)+1:02d}")
+        minute_spinner_next = time_panel.locator(".el-time-spinner__list").nth(1).locator(".el-time-spinner__item",
+                                                                                     has_text=minute_next_str).first
+        minute_spinner_next.scroll_into_view_if_needed(timeout=timeout)
+        minute_spinner.click(timeout=timeout)
 
         # 判断是否支持秒
         if time_panel.locator(".el-time-spinner__list").count() >= 3:
+            second_next_str = str(f"{int(second_str) + 1:02d}")
             second_spinner = time_panel.locator(".el-time-spinner__list").nth(2).locator(".el-time-spinner__item",
                                                                                          has_text=second_str).first
-            second_spinner.scroll_into_view_if_needed(timeout=timeout)
-            # second_spinner.click(timeout=timeout)
+            second_spinner_next = time_panel.locator(".el-time-spinner__list").nth(2).locator(".el-time-spinner__item",
+                                                                                         has_text=second_next_str).first
+            second_spinner_next.scroll_into_view_if_needed(timeout=timeout)
+            second_spinner.click(timeout=timeout)
 
         # 点击时间选择器中的“确定”
         time_panel.get_by_text("确定").click(timeout=timeout)
@@ -648,6 +667,108 @@ class PageObject:
 
     def 快捷操作_填写表单_增加根据数据类确定唯一表单版(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
         # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
+
+        # 查询所有的el-form
+        # form_list = page.locator('.el-form')
+        # # 查找所有的表单项列表：[]页面上已有的表单项列表
+        # # 遍历出所有的el-form
+        #  for form in form_list.all():
+        #     # 获取所有的表单项
+        #     # 遍历所有的表单项
+        #     for item in 页面上已有的表单项列表:
+        #         # 获取表单项的文本
+        #         if  form.filter(has=item).count():
+        #             continue
+        #         else:
+        #             break
+        #     else:
+        #         return form
+
+
+
+        页面上已有的表单项列表 = []
+        已经有唯一表单项 = False
+        if 表单最上层定位:
+            # 这个判断逻辑的最终目的是得到一个处理后的表单最上层定位，可以通过代码自动寻找，但是有些情况下就是不大好找，可以手动传递到入参里
+            处理后的表单最上层定位 = 表单最上层定位
+        else:
+            for index, 表单项 in enumerate(kwargs.keys()):
+                if index == 0:
+                    # 这里尝试去找第一个表单项，一般情况下第一个表单项的文本是固定的，但不排除特殊情况，所以这里写了try，若找不到，就等一段时间
+                    try:
+                        self.locators.表单项中包含操作元素的最上级div(表单项).last.wait_for(timeout=timeout)
+                    except:
+                        pass
+
+                if self.locators.表单项中包含操作元素的最上级div(表单项).count() == 0:
+                    print(f"表单项:{表单项}的最上级div未找到")
+                    # 查看是否找到，没找到，则跳过，找下一个
+                    continue
+                else:
+                    if self.locators.表单项中包含操作元素的最上级div(表单项).count() == 1:
+                        已经有唯一表单项 = True
+                    页面上已有的表单项列表.append(self.locators.表单项中包含操作元素的最上级div(表单项))
+                if 已经有唯一表单项 and len(页面上已有的表单项列表) >= 2:
+                    # 这里只要找到一个唯一的表单项，并且页面上已经有2个表单项，通过这两个表单项的共同祖先便可以唯一确定表单最上层定位了，所以，可以退出循环
+                    break
+
+            包含可见表单项的loc = self.page.locator("*")
+            # =====================================================================
+            for 已有表单项_loc in 页面上已有的表单项列表:
+                包含可见表单项的loc = 包含可见表单项的loc.filter(has=已有表单项_loc)
+
+            if 已经有唯一表单项:
+                处理后的表单最上层定位 = 包含可见表单项的loc.last
+            else:
+                # 从多个候选的表单容器中，选择一个“最紧凑”的定位器（即文本内容最少的那个）作为最终操作的目标表单容器。
+                处理后的表单最上层定位 = min(包含可见表单项的loc.all(), key=lambda loc: len(loc.text_content()))
+                # for loc in 包含可见表单项的loc.all():
+                #     loc.highlight()
+                #     print(loc.text_content())
+            #=====================================================================
+
+        for 表单项, 内容 in kwargs.items():
+            # if not 内容:
+            #     continue
+            if 内容 is None:
+                continue
+            表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位)
+            assert 表单项中包含操作元素的最上级div.count() > 0, f"表单项: {表单项} 的最上级div未找到"
+            # if 表单项中包含操作元素的最上级div.locator(
+            #         ".el-input").count():
+            #     self.表单_文本框填写(表单项名称=表单项, 需要填写的文本=内容, 表单最上层定位=处理后的表单最上层定位,
+            #                          timeout=timeout)
+            # 若该元素不是下拉框、级联选择器等其他类型，则认为它是文本框
+            if 表单项中包含操作元素的最上级div.locator(">.el-input, .el-textarea").count():
+            # if 表单项中包含操作元素的最上级div.locator(".el-select,.el-cascader,.el-date-editor--date, .el-date-editor--datetime,.el-date-editor--datetimerange, .el-upload").count()==0:
+                self.表单_文本框填写(表单项名称=表单项, 需要填写的文本=内容, 表单最上层定位=处理后的表单最上层定位,
+                                     timeout=8000)
+            elif 表单项中包含操作元素的最上级div.locator(".el-select").count():
+                self.表单_下拉框选择(表单项名称=表单项, 需要选择的项=内容, 表单最上层定位=处理后的表单最上层定位,
+                                     timeout=timeout)
+            elif 表单项中包含操作元素的最上级div.locator(".el-cascader").count():
+                self.表单_级联选择器选择(表单项名称=表单项, 路径=内容, 表单最上层定位=处理后的表单最上层定位,
+                                     timeout=timeout)
+            # elif 表单项中包含操作元素的最上级div.locator(".ant-radio-group").count():
+            #     self.表单_radio选择(表单项名称=表单项, 需要选择的项=内容, 表单最上层定位=处理后的表单最上层定位,
+            #                         timeout=timeout)
+            elif 表单项中包含操作元素的最上级div.locator(".el-date-editor--date, .el-date-editor--datetime").count():
+                self.表单_日期时间选择器(表单项名称=表单项, 日期=内容, 表单最上层定位=处理后的表单最上层定位,
+                                    timeout=timeout)
+            # elif 表单项中包含操作元素的最上级div.get_by_role("switch").count():
+            #     self.表单_switch开关(表单项名称=表单项, 开关状态=内容, 表单最上层定位=处理后的表单最上层定位,
+            #                          timeout=timeout)
+            elif 表单项中包含操作元素的最上级div.locator(".el-date-editor--datetimerange").count():
+                self.表单_日期时间范围选择器_左右面板联动(表单项名称=表单项, 日期=内容, 表单最上层定位=处理后的表单最上层定位,
+                                     timeout=timeout)
+            elif 表单项中包含操作元素的最上级div.locator(".el-upload").count():
+                self.表单_文件上传(表单项名称=表单项, 文件路径=内容, 表单最上层定位=处理后的表单最上层定位,
+                                    timeout=timeout)
+            else:
+                pytest.fail(f"不支持的快捷表单填写:\n{表单项}:{内容}")
+
+    def 校验表单中数据成功修改(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
+        # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
         页面上已有的表单项列表 = []
         已经有唯一表单项 = False
         if 表单最上层定位:
@@ -690,37 +811,11 @@ class PageObject:
             #     continue
             if 内容 is None:
                 continue
-            # if self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(
-            #         ".el-input").count():
-            #     self.表单_文本框填写(表单项名称=表单项, 需要填写的文本=内容, 表单最上层定位=处理后的表单最上层定位,
-            #                          timeout=timeout)
-            # 若该元素不是下拉框、级联选择器等其他类型，则认为它是文本框
-            if self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-select,.el-cascader,.el-date-editor--date, .el-date-editor--datetime,.el-date-editor--datetimerange, .el-upload").count()==0:
-                self.表单_文本框填写(表单项名称=表单项, 需要填写的文本=内容, 表单最上层定位=处理后的表单最上层定位,
-                                     timeout=8000)
-            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-select").count():
-                self.表单_下拉框选择(表单项名称=表单项, 需要选择的项=内容, 表单最上层定位=处理后的表单最上层定位,
-                                     timeout=timeout)
-            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-cascader").count():
-                self.表单_级联选择器选择(表单项名称=表单项, 路径=内容, 表单最上层定位=处理后的表单最上层定位,
-                                     timeout=timeout)
-            # elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".ant-radio-group").count():
-            #     self.表单_radio选择(表单项名称=表单项, 需要选择的项=内容, 表单最上层定位=处理后的表单最上层定位,
-            #                         timeout=timeout)
-            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-date-editor--date, .el-date-editor--datetime").count():
-                self.表单_日期时间选择器(表单项名称=表单项, 日期=内容, 表单最上层定位=处理后的表单最上层定位,
-                                    timeout=timeout)
-            # elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).get_by_role("switch").count():
-            #     self.表单_switch开关(表单项名称=表单项, 开关状态=内容, 表单最上层定位=处理后的表单最上层定位,
-            #                          timeout=timeout)
-            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-date-editor--datetimerange").count():
-                self.表单_日期时间范围选择器_左右面板联动(表单项名称=表单项, 日期=内容, 表单最上层定位=处理后的表单最上层定位,
-                                     timeout=timeout)
-            elif self.locators.表单项中包含操作元素的最上级div(表单项, 处理后的表单最上层定位).locator(".el-upload").count():
-                self.表单_文件上传(表单项名称=表单项, 文件路径=内容, 表单最上层定位=处理后的表单最上层定位,
-                                    timeout=timeout)
-            else:
-                pytest.fail(f"不支持的快捷表单填写:\n{表单项}:{内容}")
+            表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项,处理后的表单最上层定位)
+            assert 表单项中包含操作元素的最上级div.count() > 0, f"表单项: {表单项} 的最上级div未找到"
+            内容_表单项 = 表单项中包含操作元素的最上级div.locator('input,textarea').input_value()
+            # print(内容_表单项)
+            assert 内容_表单项 == 内容, f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
 
 
 if __name__ == '__main__':
@@ -750,12 +845,12 @@ if __name__ == '__main__':
         # page.表单_日期时间范围选择器_左右面板联动("公开时间", "2060-07-05,2060-08-29")
 
         # 日期时间范围
-        # page.表单_日期时间范围选择器_左右面板联动("发布日期", "2060-07-05 02:30:59,2060-07-14 17:08:26")
+        page.表单_日期时间范围选择器_左右面板联动("发布日期", "2060-07-05 03:02:01,2060-07-14 17:08:26")
         # page.表单_日期时间范围选择器_左右面板联动("发布日期", "2060-07-05 10:20:40,2060-07-14 17:08:26")
 
         # page.快捷操作_填写表单({"发布面向对象":"合肥市/庐阳区/中电数智街道/中电数智小区/金城小区", "标题关键词":"啦啦啦"})
         # page.快捷操作_填写表单_增加根据数据类确定唯一表单版(发布面向对象="合肥市/庐阳区/中电数智街道/中电数智小区/金城小区", 标题关键词="啦啦啦")
 
-        page.快捷操作_填写表单_增加根据数据类确定唯一表单版(标题="党务", 状态="未上架")
+        # page.快捷操作_填写表单_增加根据数据类确定唯一表单版(标题="党务", 状态="未上架")
 
         # page.wait_for_timeout(10000)

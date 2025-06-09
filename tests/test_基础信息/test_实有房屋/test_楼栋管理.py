@@ -6,7 +6,6 @@ import random
 import allure
 
 from base_case import BaseCase
-from pages.meeting_room_manage.meeting_room_manage_page import MeetingRoomManagePageBase
 
 from playwright.sync_api import expect, sync_playwright
 import pytest
@@ -18,7 +17,6 @@ from pages.基础信息.实有房屋.楼栋管理 import PageFloor
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-# 测试夹具-获取浏览器当前打开页面，并返回 MeetingRoomManagePageBase 对象
 @pytest.fixture(scope="function")
 def 楼栋管理页面(浏览器已打开的页面):
     # 将页面封装为楼栋管理页面
@@ -406,7 +404,7 @@ class TestEdit(BaseCase):
         # 点击查询按钮
         楼栋管理页面.click_button("搜索")
         楼栋管理页面.点击编辑按钮(楼栋名称)
-        楼栋管理页面.校验详情页数据与修改后数据一致(楼栋管理页面.获取楼栋信息表单(),单元数=单元数, 楼层数=楼层数, 楼栋名称=楼栋名称, 经度=经度, 纬度=纬度)
+        楼栋管理页面.校验表单中数据成功修改(楼栋管理页面.获取楼栋信息表单(), 单元数=单元数, 楼层数=楼层数, 楼栋名称=楼栋名称, 经度=经度, 纬度=纬度)
 
     @pytest.mark.usefixtures("后置操作_刷新页面")
     @pytest.mark.parametrize(
