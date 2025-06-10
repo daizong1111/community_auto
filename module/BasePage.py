@@ -768,6 +768,8 @@ class PageObject:
                 pytest.fail(f"不支持的快捷表单填写:\n{表单项}:{内容}")
 
     def 校验表单中数据成功修改(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
+        # 强制等待，避免内容未更新
+        self.page.wait_for_timeout(1000)
         # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
         页面上已有的表单项列表 = []
         已经有唯一表单项 = False
@@ -805,6 +807,7 @@ class PageObject:
                 # for loc in 包含可见表单项的loc.all():
                 #     loc.highlight()
                 #     print(loc.text_content())
+
 
         for 表单项, 内容 in kwargs.items():
             # if not 内容:

@@ -12,6 +12,10 @@ class BaseQueryPage:
     def __init__(self, page):
         self.page = page
 
+    @abstractmethod
+    def 获取查询接口响应的数据(self):
+        pass
+
     def get_first_page_button(self):
         # 首页按钮
         return self.page.locator("//ul[@class='el-pager']/li[text()='1']")
@@ -85,8 +89,10 @@ class BaseQueryPage:
             return [], 0
         # 将当前页置为第一页
         self.get_first_page_button().click()
-        # # 强制等待一秒，使表格内容更新
-        # self.page.wait_for_timeout(1000)
+        # # 强制等待一秒，使表格内容更新，待后续优化为显示等待
+        # 等待表格内容刷新完毕
+        # 等待页面加载完毕
+        self.page.wait_for_timeout(1000)
 
         # 遍历所有的页，提取表格中的数据到列表中
         return self.extract_table_data()
@@ -164,6 +170,70 @@ class BaseQueryPage:
             print("数据库数据:", db_list)
             print("页面数据条数:", len(page_data))
             print("数据库数据条数", len(db_list))
+            return False
+
+    def 对比查询接口数据和数据库数据(self, response, db_data, fields):
+        """
+        比较页面数据和数据库数据。
+
+        :param response: 页面数据，格式为二维列表。
+        :param db_data: 数据库数据，格式为字典列表。
+        :param fields: 需要比较的字段名列表，例如 ['room_name', 'room_code', 'capacity']。
+        :return: 如果数据一致返回 True，否则返回 False。
+        """
+        # 将数据库数据转换为列表
+        db_list = []
+        # 遍历数据库数据
+        for row in db_data:
+            row_data = []
+            # 遍历字段名列表
+            for field in fields:
+                # 从当前行中获取字段的值
+                value = row.get(field, "")
+                if isinstance(value, datetime):  # 检查是否为 datetime 类型
+                    value = value.strftime('%Y-%m-%d %H:%M:%S')  # 转换为指定格式的字符串
+                # 将转换后的数据添加到行数据列表中
+                row_data.append(str(value))
+            # 将行数据添加到总列表中
+            db_list.append(row_data)
+
+        total = response["data"]["total"]
+        records = response["data"]["records"]
+        # 比较两个数据集
+        # if response == db_list:
+        #     print("数据一致，测试通过")
+        #     return True
+
+        len_db = len(db_list)
+
+        if total == len_db:
+            print("数据一致，测试通过")
+            # print("接口数据:", records)
+            # print("数据库数据:", db_list)
+            # print("接口数据条数:", total)
+            # print("数据库数据条数", len_db)
+            return True
+        else:
+            # 将接口数据转换为列表
+            response_data_list = []
+            # 遍历数据库数据
+            for row in records:
+                row_data = []
+                # 遍历字段名列表
+                for field in fields:
+                    # 从当前行中获取字段的值
+                    value = row.get(field, "")
+                    if isinstance(value, datetime):  # 检查是否为 datetime 类型
+                        value = value.strftime('%Y-%m-%d %H:%M:%S')  # 转换为指定格式的字符串
+                    # 将转换后的数据添加到行数据列表中
+                    row_data.append(str(value))
+                # 将行数据添加到总列表中
+                response_data_list.append(row_data)
+            print("数据不一致，测试不通过")
+            print("接口数据:", response_data_list)
+            print("数据库数据:", db_list)
+            print("接口数据条数:", total)
+            print("数据库数据条数", len_db)
             return False
 
     def get_reset_btn(self):

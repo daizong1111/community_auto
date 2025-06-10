@@ -1,5 +1,5 @@
 import pytest
-from playwright.sync_api import sync_playwright, Playwright, Page
+from playwright.sync_api import sync_playwright, Playwright, Page, expect
 
 from module.base_query_page import BaseQueryPage
 import pymysql
@@ -85,12 +85,18 @@ def 后置操作_刷新页面(浏览器已打开的页面):
     yield 浏览器已打开的页面
     # 刷新
     浏览器已打开的页面.reload()
+    # 等待网络请求完成
+    expect(浏览器已打开的页面.get_by_text("系统加载中")).not_to_be_visible(timeout=5000)
 
 @pytest.fixture(scope="function")
 def 后置操作_重置查询条件(查询页面):
     yield 查询页面
     # 执行完用例之后，点击重置按钮，清空查询条件
     查询页面.click_reset_btn()
+    expect(查询页面.page.get_by_text("加载中")).not_to_be_visible(timeout=5000)
+    # 等待网络请求完成
+    # 查询页面.page.wait_for_load_state("networkidle")
+
 
 
 

@@ -21,10 +21,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def 随机门牌号():
     return str(random.randint(1, 9999))
 
+
 @pytest.fixture(scope="module")
 def 修改后的门牌号(随机门牌号):
     return str(int(随机门牌号) + 1)
-
 
 
 @pytest.fixture(scope="function")
@@ -285,7 +285,7 @@ class TestEdit(BaseCase):
                           所属小区, 楼栋名称, 所属单元, 门牌号, 房屋状态, 楼层数, 房屋用途,
                           房屋产权性质, 房屋面积, 备注, 房屋照片):
         # 输入查询条件
-        # 随机门牌号 = "9964"
+        # 随机门牌号 = "1736"
         房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(门牌号=随机门牌号)
         self.log_step("输入查询条件")
         # 点击查询按钮
@@ -502,7 +502,6 @@ class TestEdit(BaseCase):
         self.log_step("断言页面提示信息-门牌号")
 
 
-
 def build_query_sql(选择小区=None, 选择楼栋=None, 楼栋名称=None, 选择单元=None, 门牌号=None):
     """
     根据给定参数动态生成小区查询 SQL。
@@ -550,104 +549,83 @@ class TestQuery(BaseCase):
     @pytest.mark.parametrize(
         "选择小区, 选择楼栋, 楼栋名称, 选择单元, 门牌号",
         [
-            # (None, None, None, None, None),
-            # ("中电数智街道/中电数智社区/天王巷小区", None, None, None, None),
-            (None, "1", None, None, None),
-            # (None, None, "官塘新村", None, None),
-            (None, None, None, "1单元", None),
-            # (None, None, None, None, "101"),
-            # ("中电数智街道/中电数智社区/天王巷小区", "1", None, None, None),
-            # ("中电数智街道/中电数智社区/天王巷小区", None, "官塘新村", None, None),
-            # (None, "1", "官塘新村", None, None),
-            # ("中电数智街道/中电数智社区/天王巷小区", "1", "官塘新村", "1单元", "101"),
+            (None, None, None, None, None),
+            ("中电数智街道/中电数智社区/天王巷小区", None, None, None, None),
+            (None, None, "官塘新村", None, None),
+            (None, None, None, None, "101"),
+            ("中电数智街道/中电数智社区/天王巷小区", "1", None, None, None),
+            ("中电数智街道/中电数智社区/天王巷小区", None, "官塘新村", None, None),
+            ("中电数智街道/中电数智社区/天王巷小区", None, None, None, "101"),
+            (None, None, "官塘新村", None, "101"),
+            ("中电数智街道/中电数智社区/天王巷小区", "1", "官塘新村", None, None),
+            ("中电数智街道/中电数智社区/天王巷小区", "1", None, "1单元", None),
+            ("中电数智街道/中电数智社区/天王巷小区", "1", None, None, "101"),
+            ("中电数智街道/中电数智社区/天王巷小区", "1", "官塘新村", "1单元", "101"),
         ]
     )
     def test_query(self, 房屋管理页面, db_connection, 选择小区, 选择楼栋, 楼栋名称, 选择单元, 门牌号):
         # 输入查询条件
-        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(选择小区=选择小区, 选择楼栋=选择楼栋, 楼栋名称=楼栋名称, 选择单元=选择单元, 门牌号=门牌号)
+        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(选择小区=选择小区, 选择楼栋=选择楼栋,
+                                                                    楼栋名称=楼栋名称, 选择单元=选择单元, 门牌号=门牌号)
         self.log_step("输入查询条件")
-        # 点击查询按钮
-        房屋管理页面.click_button("搜索")
-        self.log_step("点击查询按钮")
-        # 等待查询结果加载
-        房屋管理页面.page.wait_for_timeout(1000)  # 等待
-        self.log_step("等待查询结果加载")
-        pages_data, pages_data_count = 房屋管理页面.get_table_data()
-        # print(pages_data)
-        self.log_step("获取所有页面的表格数据")
+
+        # 获取查询接口响应的数据
+        查询接口返回的数据 = 房屋管理页面.获取查询接口响应的数据("搜索")
+        self.log_step("获取查询接口响应的数据")
 
         # 构建 SQL 查询
-        sql, params = build_query_sql(选择小区=选择小区, 选择楼栋=选择楼栋, 楼栋名称=楼栋名称, 选择单元=选择单元, 门牌号=门牌号)
+        sql, params = build_query_sql(选择小区=选择小区, 选择楼栋=选择楼栋, 楼栋名称=楼栋名称, 选择单元=选择单元,
+                                      门牌号=门牌号)
 
         # 根据sql语句和参数，从数据库中提取数据
         db_data = 房屋管理页面.get_db_data(db_connection, query=sql, params=params)
         self.log_step("从数据库中提取数据")
 
-        # 比较两个数据集
-        assert 房屋管理页面.compare_data(pages_data, db_data,
-                                         ['xqmc', 'ldh', 'ldmc', 'dymc', 'mph', 'fwmj']), "页面数据与数据库数据不一致"
+        # 对比数据
+        assert 房屋管理页面.对比查询接口数据和数据库数据(查询接口返回的数据, db_data,['xqmc', 'ldh', 'ldmc', 'dymc', 'mph', 'fwmj'])
         self.log_step("比较两个数据集")
 
 
 class TestReset(BaseCase):
     def test_reset(self, 房屋管理页面, db_connection):
         # 输入查询条件
-        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(选择小区="中电数智街道/中电数智社区/金城大厦",
-                                                                    楼栋号="1",
-                                                                    楼栋名称="1栋")
+        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(选择小区="中电数智街道/中电数智社区/天王巷小区",
+                                                                    选择楼栋="1",
+                                                                    楼栋名称="官塘新村", 选择单元="1单元", 门牌号="101")
         self.log_step("输入查询条件")
-        # 点击查询按钮
-        房屋管理页面.click_button("搜索")
-        self.log_step("点击查询按钮")
-        # 等待查询结果加载
-        房屋管理页面.page.wait_for_timeout(1000)  # 等待
-        self.log_step("等待查询结果加载")
-        # 点击重置按钮
-        房屋管理页面.click_reset_btn()
-        # 等待查询结果加载
-        房屋管理页面.page.wait_for_timeout(1000)  # 等待
 
-        房屋管理页面.验证搜索框内容被重置()
-
-        pages_data, pages_data_count = 房屋管理页面.get_table_data()
-        # print(pages_data)
-        self.log_step("获取所有页面的表格数据")
+        # 点击重置按钮，获取查询接口响应的数据
+        查询接口返回的数据 = 房屋管理页面.获取查询接口响应的数据("重置")
+        self.log_step("获取查询接口响应的数据")
 
         # 构建 SQL 查询
-        sql, params = build_query_sql(选择小区=None, 楼栋号=None, 楼栋名称=None)
+        sql, params = build_query_sql(选择小区=None, 选择楼栋=None, 楼栋名称=None, 选择单元=None, 门牌号=None)
 
         # 根据sql语句和参数，从数据库中提取数据
         db_data = 房屋管理页面.get_db_data(db_connection, query=sql, params=params)
         self.log_step("从数据库中提取数据")
 
-        # 比较两个数据集
-        assert 房屋管理页面.compare_data(pages_data, db_data,
-                                         ['xqmc', 'ldh', 'ldmc', 'lcs', 'dys']), "页面数据与数据库数据不一致"
+        # 对比数据
+        assert 房屋管理页面.对比查询接口数据和数据库数据(查询接口返回的数据, db_data,
+                                                         ['xqmc', 'ldh', 'ldmc', 'dymc', 'mph', 'fwmj'])
         self.log_step("比较两个数据集")
 
-
-sql_查询楼栋表记录数 = "SELECT count(*) as count FROM ybds_building"
+        房屋管理页面.校验表单中数据成功修改(选择小区="", 选择楼栋="", 楼栋名称="", 选择单元="", 门牌号="")
 
 
 @pytest.mark.usefixtures("后置操作_重置查询条件")
 class TestDelete(BaseCase):
-    @pytest.mark.parametrize("楼栋名称_待删除", [
-        "修改-成功"
-    ])
-    def test_delete_success(self, 房屋管理页面, db_connection, 楼栋名称_待删除):
+    def test_delete_success(self, 房屋管理页面, db_connection, 修改后的门牌号):
+        # 修改后的门牌号 = "103"
         # 从数据库中统计状态为删除的数据条数
-        数据库中数据量_删除前 = 房屋管理页面.get_db_data(
-            db_connection,
-            query=sql_查询楼栋表记录数,
-        )
-        数据库中数据量_删除前 = 数据库中数据量_删除前[0]["count"]
+        数据库中数据量_删除前 = 房屋管理页面.统计数据库表中的记录数(db_connection)
         # 查找待删除的记录
-        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(楼栋名称=楼栋名称_待删除)
+        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(门牌号=修改后的门牌号)
 
         房屋管理页面.click_button("搜索")
         _, 表格中数据量_删除前 = 房屋管理页面.get_table_data()
         self.log_step("统计删除操作前表格行数")
-        房屋管理页面.点击删除按钮(楼栋名称_待删除)
+        房屋管理页面.点击删除按钮(修改后的门牌号)
         房屋管理页面.click_button("确定")
         self.log_step("点击删除按钮,弹窗后点击确定按钮")
         expect(房屋管理页面.page.get_by_text("删除成功")).to_be_visible(timeout=5000)
@@ -661,32 +639,24 @@ class TestDelete(BaseCase):
         # 验证数据库中的数据是否已删除（或标记为已删除）
         db_connection.ping(reconnect=True)  # 确保数据库连接有效
         db_connection.commit()
-        数据库中数据量_删除后 = 房屋管理页面.get_db_data(
-            db_connection,
-            query=sql_查询楼栋表记录数,
-        )
-        数据库中数据量_删除后 = 数据库中数据量_删除后[0]["count"]
+        数据库中数据量_删除后 = 房屋管理页面.统计数据库表中的记录数(db_connection)
         # 断言：数据库中状态为已删除的数据多了1条
         assert 数据库中数据量_删除后 == 数据库中数据量_删除前 - 1, "数据库中的数据未删除"
         self.log_step("验证数据库中的数据是否已删除")
 
-    @pytest.mark.parametrize("楼栋名称_待删除", [
-        "1栋"
+    @pytest.mark.parametrize("门牌号_待删除", [
+        "1"
     ])
-    def test_delete_cancel(self, 房屋管理页面, db_connection, 楼栋名称_待删除):
+    def test_delete_cancel(self, 房屋管理页面, db_connection, 门牌号_待删除):
         # 从数据库中统计状态为删除的数据条数
-        数据库中数据量_删除前 = 房屋管理页面.get_db_data(
-            db_connection,
-            query=sql_查询楼栋表记录数,
-        )
-        数据库中数据量_删除前 = 数据库中数据量_删除前[0]["count"]
+        数据库中数据量_删除前 = 房屋管理页面.统计数据库表中的记录数(db_connection)
         # 查找待删除的记录
-        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(楼栋名称=楼栋名称_待删除)
+        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(门牌号=门牌号_待删除)
 
         房屋管理页面.click_button("搜索")
         _, 表格中数据量_删除前 = 房屋管理页面.get_table_data()
         self.log_step("统计删除操作前表格行数")
-        房屋管理页面.点击删除按钮(楼栋名称_待删除)
+        房屋管理页面.点击删除按钮(门牌号_待删除)
         房屋管理页面.click_button("取消")
         self.log_step("点击删除按钮,弹窗后点击取消按钮")
         expect(房屋管理页面.page.get_by_text("删除成功")).not_to_be_visible(timeout=5000)
@@ -700,35 +670,29 @@ class TestDelete(BaseCase):
         # 验证数据库中的数据是否已删除（或标记为已删除）
         db_connection.ping(reconnect=True)  # 确保数据库连接有效
         db_connection.commit()
-        数据库中数据量_删除后 = 房屋管理页面.get_db_data(
-            db_connection,
-            query=sql_查询楼栋表记录数,
-        )
-        数据库中数据量_删除后 = 数据库中数据量_删除后[0]["count"]
+        数据库中数据量_删除后 = 房屋管理页面.统计数据库表中的记录数(db_connection)
         # 断言：数据库中状态为已删除的数据不变
         assert 数据库中数据量_删除后 == 数据库中数据量_删除前, "数据库中的数据被删除了"
         self.log_step("验证数据库中的数据是否已删除")
 
-    @pytest.mark.parametrize("楼栋名称_待删除", [
-        "修改-失败"
-    ])
-    def test_delete_fail(self, 房屋管理页面, db_connection, 楼栋名称_待删除):
+    @pytest.mark.parametrize("选择小区_待删除, 选择楼栋_待删除, 选择单元_待删除, 门牌号_待删除",
+                             [
+                                 ("中电数智街道/中电数智社区/金城大厦", "1", "1单元", "1")
+                             ])
+    def test_delete_fail(self, 房屋管理页面, db_connection, 选择小区_待删除, 选择楼栋_待删除, 选择单元_待删除,
+                         门牌号_待删除):
         # 从数据库中统计状态为删除的数据条数
-        数据库中数据量_删除前 = 房屋管理页面.get_db_data(
-            db_connection,
-            query=sql_查询楼栋表记录数,
-        )
-        数据库中数据量_删除前 = 数据库中数据量_删除前[0]["count"]
+        数据库中数据量_删除前 = 房屋管理页面.统计数据库表中的记录数(db_connection)
         # 查找待删除的记录
-        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(楼栋名称=楼栋名称_待删除)
-
+        房屋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(选择小区=选择小区_待删除, 选择楼栋=选择楼栋_待删除,
+                                                                    选择单元=选择单元_待删除, 门牌号=门牌号_待删除)
         房屋管理页面.click_button("搜索")
         _, 表格中数据量_删除前 = 房屋管理页面.get_table_data()
         self.log_step("统计删除操作前表格行数")
-        房屋管理页面.点击删除按钮(楼栋名称_待删除)
+        房屋管理页面.点击删除按钮(门牌号_待删除)
         房屋管理页面.click_button("确定")
         self.log_step("点击删除按钮,弹窗后点击确定按钮")
-        expect(房屋管理页面.page.get_by_text("所选楼栋里还存在房屋数据，不允许删除")).to_be_visible(timeout=5000)
+        expect(房屋管理页面.page.get_by_text("不允许删除")).to_be_visible(timeout=5000)
         self.log_step("验证页面出现不允许删除字样")
         # 等待1秒
         房屋管理页面.page.wait_for_timeout(1000)
@@ -739,11 +703,7 @@ class TestDelete(BaseCase):
         # 验证数据库中的数据是否已删除（或标记为已删除）
         db_connection.ping(reconnect=True)  # 确保数据库连接有效
         db_connection.commit()
-        数据库中数据量_删除后 = 房屋管理页面.get_db_data(
-            db_connection,
-            query=sql_查询楼栋表记录数,
-        )
-        数据库中数据量_删除后 = 数据库中数据量_删除后[0]["count"]
+        数据库中数据量_删除后 = 房屋管理页面.统计数据库表中的记录数(db_connection)
         # 断言：数据库中数据量不变
         assert 数据库中数据量_删除后 == 数据库中数据量_删除前, "数据库中的数据删除了"
         self.log_step("验证数据库中的数据是否已删除")

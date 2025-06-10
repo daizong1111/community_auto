@@ -1,3 +1,5 @@
+import re
+
 from playwright.sync_api import Page
 
 from module.BasePage import PageObject
@@ -13,6 +15,28 @@ class PageHouse(PageObject, BaseQueryPage):
     #
     # def 点击新增按钮(self):
     #     self.获取新增按钮().click()
+
+    def 获取查询接口响应的数据(self, 按钮名称:str):
+        """
+                点击查询按钮后，等待并获取查询接口的响应数据。
+
+                :return: 接口返回的 JSON 数据。
+                """
+        # 1. 监听将要发出的请求（假设查询接口路径包含 '/page'）
+        # 先监听响应，再触发请求
+        with self.page.expect_request(re.compile(r"/ybdsHouse/page")) as request_info, \
+                self.page.expect_response(re.compile(r"/ybdsHouse/page")) as response_info:
+
+            self.click_button(按钮名称)  # 触发请求
+
+        # 3. 获取请求对象
+        request = request_info.value
+        # print("捕获到的请求URL:", request.url)  # 打印实际发出的 URL
+
+        response = response_info.value  # 直接获取响应
+
+        # 5. 返回解析后的 JSON 响应内容
+        return response.json()
 
     def 统计数据库表中的记录数(self, connection):
         sql = """select count(*) as count from ybds_house;"""
