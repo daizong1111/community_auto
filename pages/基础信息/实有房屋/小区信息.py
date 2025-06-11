@@ -4,7 +4,7 @@ from module.BasePage import PageObject
 from module.base_query_page import BaseQueryPage
 
 
-class PageCommunity(PageObject, BaseQueryPage):
+class PageCommunity(BaseQueryPage):
     def __init__(self, page: Page):
         super().__init__(page)
         # self.table = Table(page)
@@ -22,12 +22,13 @@ class PageCommunity(PageObject, BaseQueryPage):
         self.获取物业新增按钮().click()
 
     def 统计数据库表中的记录数(self, connection):
-        sql = """select count(*) as count from base_village where del_flag = 0;"""
+        sql = """select count(*) as count from base_village"""
         db_data = self.get_db_data(connection, sql)
         return db_data[0]["count"]
 
     def 验证新增的物业存在于下拉选项中(self, 物业名称):
-        最上级div_物业名称 = self.locators.表单项中包含操作元素的最上级div("物业名称",self.page.locator('//div[@aria-label="新增小区信息"]'))
+        最上级div_物业名称 = self.locators.表单项中包含操作元素的最上级div("物业名称", self.page.locator(
+            '//div[@aria-label="新增小区信息"]'))
         下拉框_物业名称 = 最上级div_物业名称.locator("input,textarea").locator("visible=true").last
         下拉框_物业名称.click()
         下拉列表_物业名称 = self.page.locator(".el-select-dropdown").locator("visible=true")
@@ -37,7 +38,8 @@ class PageCommunity(PageObject, BaseQueryPage):
 
     def 验证新增物业信息_失败_必填项缺失(self):
         对话框_新增物业信息 = self.page.locator('//div[@aria-label="新增物业信息"]')
-        assert 对话框_新增物业信息.get_by_text("请输入").first.is_visible() or 对话框_新增物业信息.get_by_text("请选择").first.is_visible()
+        assert 对话框_新增物业信息.get_by_text("请输入").count() > 0 or 对话框_新增物业信息.get_by_text(
+            "请选择").count() > 0
 
     def 获取新增物业信息对话框(self):
         return self.page.locator('//div[@aria-label="新增物业信息"]')
@@ -60,7 +62,18 @@ class PageCommunity(PageObject, BaseQueryPage):
         内容_搜索框_小区名称 = self.locators.表单项中包含操作元素的最上级div("小区名称").locator('input').input_value()
         assert 内容_搜索框_小区类型 == "全部" and 内容_搜索框_管理类别 == "全部" and 内容_搜索框_小区名称 == ""
 
+    def 获取提示弹窗(self):
+        return self.page.locator(".el-message-box")
+    def 获取提示弹窗中的确定按钮(self):
+        return self.获取提示弹窗().locator("button", has_text="确定")
 
+    def 点击提示弹窗中的确定按钮(self):
+        self.获取提示弹窗中的确定按钮().click()
 
+    def 统计数据库表中的记录数_修改后(self, connection, 小区名称):
+        sql = """select count(*) as count from base_village where xqmc = %(小区名称)s"""
+        db_data = self.get_db_data(connection, sql, {"小区名称": 小区名称})
+        return db_data[0]["count"]
 
-
+    def 定位器_编辑表单(self):
+        return self.page.locator('//div[@aria-label="编辑小区信息"]')

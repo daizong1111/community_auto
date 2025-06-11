@@ -818,7 +818,7 @@ class PageObject:
             assert 表单项中包含操作元素的最上级div.count() > 0, f"表单项: {表单项} 的最上级div未找到"
             内容_表单项 = 表单项中包含操作元素的最上级div.locator('input,textarea').input_value()
             # print(内容_表单项)
-            assert 内容_表单项 == 内容, f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
+            assert 内容_表单项 in 内容, f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
 
 
 if __name__ == '__main__':

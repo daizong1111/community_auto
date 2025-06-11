@@ -4,12 +4,14 @@ from abc import abstractmethod
 from collections import OrderedDict
 from datetime import datetime
 from playwright.sync_api import expect, Locator
+from .BasePage import PageObject
 
 """查询页面基类，封装了查询操作相关的所有功能"""
 
 
-class BaseQueryPage:
+class BaseQueryPage(PageObject):
     def __init__(self, page):
+        super().__init__(page)
         self.page = page
 
     @abstractmethod
@@ -36,6 +38,9 @@ class BaseQueryPage:
     def get_table_rows(self):
         # 定位表格中的所有行
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody/tr")
+
+    def 定位器_表格(self) -> Locator:
+        return self.page.locator("(//table[@class='el-table__body'])[1]")
 
     def extract_table_data(self):
         """从当前页开始，抽取表格中的数据到列表中"""
@@ -267,3 +272,15 @@ class BaseQueryPage:
 
     def 点击删除按钮(self, 关键字):
         self.获取删除按钮(关键字).evaluate("(el) => el.click()")
+
+    def 定位器_勾选框_包含关键字(self, 关键字: str):
+        return self.定位器_表格().locator("tr", has_text=关键字)
+
+    def 点击批量删除按钮(self, 关键字, 删除数据数量):
+        已勾选数据量 = 0
+        for 勾选框 in self.定位器_勾选框_包含关键字(关键字).all():
+            勾选框.click()
+            已勾选数据量 += 1
+            if 已勾选数据量 == 删除数据数量:
+                break
+        self.click_button("批量删除")
