@@ -18,7 +18,7 @@ def run_tests():
                    f"--alluredir={results_dir}",
                    # '--alluredir=allure-results',
                    # 执行指定的用例文件(不写则执行所有的用例)
-                   'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestAdd::test_add_success',
+                   'tests/test_基础信息/test_实有房屋/test_一房一档.py::TestAdd::test_add_miss_data',
                    # 'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestEdit::test_edit_success',
                    # 'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestDelete::test_delete_success'
                    # 'tests/test_基础信息/test_实有房屋/test_小区信息.py'

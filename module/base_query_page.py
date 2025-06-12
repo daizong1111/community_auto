@@ -1,22 +1,60 @@
 # 数据库中的数据可能有datetime类型的，需要做处理
+import binascii
+import json
 import re
-from abc import abstractmethod
-from collections import OrderedDict
+
 from datetime import datetime
 from playwright.sync_api import expect, Locator
-from .BasePage import PageObject
+from module.BasePage import PageObject
+from gmssl import sm4
+
+
+# 将 Hex 字符串转为 bytes
+def hex2bytes(hex_str: str) -> bytes:
+    return binascii.unhexlify(hex_str.encode())
+
+
+# SM4 CBC 解密函数
+def decrypt_sm4_cbc(encrypted_data_hex: str, key_hex: str, iv_hex: str) -> dict:
+    """
+    使用 SM4 CBC 模式解密 Hex 编码的密文。
+
+    :param encrypted_data_hex: Hex 编码的加密数据
+    :param key_hex: 十六进制字符串表示的密钥（16 字节）
+    :param iv_hex: 十六进制字符串表示的 IV（16 字节）
+    :return: 解密后的 JSON 数据（dict）
+    """
+    # 转换为字节
+    cipher_bytes = binascii.unhexlify(encrypted_data_hex)
+    key_bytes = binascii.unhexlify(key_hex)
+    iv_bytes = binascii.unhexlify(iv_hex)
+
+    # 初始化 SM4 解密器
+    crypt_sm4 = sm4.CryptSM4()
+    crypt_sm4.set_key(key_bytes, sm4.SM4_DECRYPT)
+
+    # 执行 CBC 解密
+    decrypted_bytes = crypt_sm4.crypt_cbc(iv_bytes, cipher_bytes)
+    # decrypted_bytes = crypt_sm4.cbc_decrypt(iv_bytes, cipher_bytes)
+
+    # 去除 PKCS5Padding 并转换为字符串
+    decrypted_text = decrypted_bytes.decode('utf-8')
+
+    # 如果是 JSON 格式数据，进一步解析
+    try:
+        return json.loads(decrypted_text)
+    except json.JSONDecodeError:
+        print("解密结果不是 JSON 格式，返回原始文本")
+        return {"plaintext": decrypted_text}
+
 
 """查询页面基类，封装了查询操作相关的所有功能"""
-
-
 class BaseQueryPage(PageObject):
     def __init__(self, page):
         super().__init__(page)
         self.page = page
-
-    @abstractmethod
-    def 获取查询接口响应的数据(self):
-        pass
+        self.sm4_key = "160adbe13e74171f617436344d4b0980"
+        self.sm4_iv = "00100000100000000001000000000010"
 
     def get_first_page_button(self):
         # 首页按钮
@@ -284,3 +322,51 @@ class BaseQueryPage(PageObject):
             if 已勾选数据量 == 删除数据数量:
                 break
         self.click_button("批量删除")
+
+    def 获取查询接口响应的数据(self, 按钮名称: str, 接口路径: str):
+        """
+                点击查询按钮后，等待并获取查询接口的响应数据。
+                接口路径如 r"/ybdsPerson/queryPersonList" 即接口完整路径的一部分
+                :return: 接口返回的 JSON 数据。
+                """
+        # 1. 监听将要发出的请求（假设查询接口路径包含 '/page'）
+        # 先监听响应，再触发请求
+        with self.page.expect_request(re.compile(接口路径)) as request_info, \
+                self.page.expect_response(re.compile(接口路径)) as response_info:
+            self.click_button(按钮名称)  # 触发请求
+
+        # 3. 获取请求对象
+        request = request_info.value
+        # print("捕获到的请求URL:", request.url)  # 打印实际发出的 URL
+
+        response = response_info.value  # 获取响应对象
+        json_data = response.json()  # 解析 JSON 响应内容
+
+        # 判断是否需要解密
+        if json_data.get("flag") == "encrypt":
+            encrypted_data = json_data.get("data")
+            # 这里调用你的解密函数，例如 decrypt(data)
+            try:
+                decrypted_data = self.decrypt(encrypted_data)
+                json_data["data"] = decrypted_data  # 替换为解密后的数据
+            except Exception as e:
+                raise ValueError(f"解密失败: {e}")
+
+        return json_data
+
+
+    def decrypt(self, encrypted_data_hex: str) -> dict:
+        return decrypt_sm4_cbc(encrypted_data_hex, self.sm4_key, self.sm4_iv)
+
+if __name__ == '__main__':
+    # 示例参数（请替换为真实值）
+    encrypted_data_hex = "你的加密Hex字符串"  # 替换为实际密文
+    key_hex = "160adbe13e74171f617436344d4b0980"
+    iv_hex = "00100000100000000001000000000010"
+
+    try:
+        result = decrypt_sm4_cbc(encrypted_data_hex, key_hex, iv_hex)
+        print("解密成功:", result)
+    except Exception as e:
+        print("解密失败:", str(e))
+

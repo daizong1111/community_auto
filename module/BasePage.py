@@ -47,6 +47,13 @@ class PageObject:
         self.url = ""
         self.locators = Locators(self.page)
 
+    def 验证表单项中出现错误提示(self):
+        assert self.page.locator(".el-form-item__error").count() > 0
+
+    def 验证页面顶部出现全局提示(self,  提示语: str):
+        expect(self.page.locator(".el-message__content", has_text=提示语)).to_be_visible()
+
+
     def click_below_and_right_of_element(self, locator: Locator, offset_x=0, offset_y=-10, timeout=None):
         """
         点击指定元素的右下方（相对于元素边界框）。
@@ -130,9 +137,13 @@ class PageObject:
         if 表单最上层定位:
             表单项 = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
                 "visible=true")
+            下拉箭头_下拉框 = 表单项.locator("i.el-select__caret").locator("visible=true")
             if 需要选择的项 == "":
-                表单项.hover()
-                关闭按钮 = 表单项.locator(".el-icon-circle-close")
+                # 将鼠标悬停到下拉箭头_下拉框上面
+                box = 下拉箭头_下拉框.first.bounding_box()
+                self.page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+
+                关闭按钮 = 表单项.locator(".el-icon-circle-close").locator("visible=true")
                 if 关闭按钮.count()>0:
                     关闭按钮.click()
                 return
@@ -147,9 +158,13 @@ class PageObject:
                 timeout=timeout)
         else:
             表单项 = self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("visible=true")
+            下拉箭头_下拉框 = 表单项.locator("i.el-select__caret").locator("visible=true")
             if 需要选择的项 == "":
-                表单项.hover()
-                关闭按钮 = 表单项.locator(".el-icon-circle-close")
+                # 将鼠标悬停到下拉箭头_下拉框上面
+                box = 下拉箭头_下拉框.first.bounding_box()
+                self.page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+                # 表单项.hover()
+                关闭按钮 = 表单项.locator(".el-icon-circle-close").locator("visible=true")
                 if 关闭按钮.count()>0:
                     关闭按钮.click()
                 return
@@ -160,6 +175,8 @@ class PageObject:
             # self.page.locator(".ant-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(timeout=timeout)
             self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项,exact=True).first.click(
                 timeout=timeout)
+        # 点击当前表单项外的其他稳定元素，如页面顶部、标题栏等，关闭选择面板，
+        self.page.locator("header").click()
         expect(self.page.locator(".el-select-dropdown").locator("visible=true")).to_be_hidden(timeout=timeout)
 
     def 表单_级联选择器选择(self, 表单项名称: str, 路径: str, 表单最上层定位: Locator = None, timeout: float = None):
@@ -209,8 +226,8 @@ class PageObject:
                 # 点击找到的菜单项，带有超时设置
                 item_locator.click(timeout=timeout)
 
-        # 不需要再点击空白位置让面板关闭，因为操作下一项的时候面板会自动关闭
-
+        # 点击当前表单项外的其他稳定元素，如页面顶部、标题栏等，关闭选择面板，
+        self.page.locator("header").click()
 
 
     def 表单_日期时间选择器(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None, timeout: float = None):
@@ -817,9 +834,13 @@ class PageObject:
             表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项,处理后的表单最上层定位)
             assert 表单项中包含操作元素的最上级div.count() > 0, f"表单项: {表单项} 的最上级div未找到"
             内容_表单项 = 表单项中包含操作元素的最上级div.locator('input,textarea').input_value()
-            # print(内容_表单项)
-            assert 内容_表单项 in 内容, f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
 
+            # 统一格式：去除两边空格，并将 " / " 替换为 "/"，再与预期值对比
+            内容_表单项_标准化 = 内容_表单项.replace(" / ", "/").strip()
+            预期内容_标准化 = str(内容).strip().replace(" / ", "/")
+            # print(内容_表单项)
+            assert 内容_表单项_标准化 == 预期内容_标准化, \
+                f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
 
 if __name__ == '__main__':
     with sync_playwright() as playwright:
