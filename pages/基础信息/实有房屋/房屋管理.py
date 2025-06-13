@@ -49,10 +49,10 @@ class PageHouse(BaseQueryPage):
         return db_data[0]["count"]
 
     def 定位器_新增表单(self):
-        return self.page.locator('//div[@aria-label="新增人口信息"]')
+        return self.page.locator('//div[@aria-label="新增房屋信息"]')
 
     def 定位器_编辑表单(self):
-        return self.page.locator('//div[@aria-label="编辑人口信息"]')
+        return self.page.locator('//div[@aria-label="编辑房屋信息"]')
 
     # def get_first_page_button(self):
     #     # 首页按钮

@@ -36,7 +36,7 @@ def page(playwright):
 #     page.wait_for_timeout(2000)
 #     yield page
 # 测试夹具-获取浏览器当前打开页面，并返回 MeetingRoomManagePageBase 对象
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def browser(playwright):
     # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")
     # 通过ip和端口连接到已经打开的chromium浏览器
@@ -60,7 +60,7 @@ def browser(playwright):
 #     # 返回会议室管理页面对象
 #     yield page
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def 浏览器已打开的页面(browser):
     # 若浏览器已打开，则直接使用已打开的浏览器，否则创建一个新的浏览器实例
     context = browser.contexts[0] if browser.contexts else browser.new_context()
@@ -142,7 +142,7 @@ def db_connection():
    # 测试结束后关闭连接
    connection.close()
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def 查询页面(浏览器已打开的页面):
     查询页面 = BaseQueryPage(浏览器已打开的页面)
     yield 查询页面

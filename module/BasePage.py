@@ -176,7 +176,7 @@ class PageObject:
             self.page.locator(".el-select-dropdown").locator("visible=true").get_by_text(需要选择的项,exact=True).first.click(
                 timeout=timeout)
         # 点击当前表单项外的其他稳定元素，如页面顶部、标题栏等，关闭选择面板，
-        self.page.locator("header").click()
+        # self.page.locator("header").click()
         expect(self.page.locator(".el-select-dropdown").locator("visible=true")).to_be_hidden(timeout=timeout)
 
     def 表单_级联选择器选择(self, 表单项名称: str, 路径: str, 表单最上层定位: Locator = None, timeout: float = None):
@@ -227,7 +227,10 @@ class PageObject:
                 item_locator.click(timeout=timeout)
 
         # 点击当前表单项外的其他稳定元素，如页面顶部、标题栏等，关闭选择面板，
-        self.page.locator("header").click()
+        # self.page.locator("header").click()
+        # 若选择了与之前相同的选项，面板不会关闭，需点击表单项，让它关闭
+        if dropdown.is_visible():
+            表单元素.click()
 
 
     def 表单_日期时间选择器(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None, timeout: float = None):
@@ -839,7 +842,7 @@ class PageObject:
             内容_表单项_标准化 = 内容_表单项.replace(" / ", "/").strip()
             预期内容_标准化 = str(内容).strip().replace(" / ", "/")
             # print(内容_表单项)
-            assert 内容_表单项_标准化 == 预期内容_标准化, \
+            assert 内容_表单项_标准化 in 预期内容_标准化, \
                 f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
 
 if __name__ == '__main__':

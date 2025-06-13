@@ -4,6 +4,8 @@ import json
 import re
 
 from datetime import datetime
+from urllib.parse import parse_qs
+
 from playwright.sync_api import expect, Locator
 from module.BasePage import PageObject
 from gmssl import sm4
@@ -354,6 +356,65 @@ class BaseQueryPage(PageObject):
 
         return json_data
 
+    def 触发请求(self, 触发方式:str):
+        if 触发方式 == "查询":
+            self.click_button("查询")
+        elif 触发方式 == "刷新":
+            self.page.reload()
+
+    def 获取请求的payload数据(self, 触发方式: str, 接口路径: str):
+        with self.page.expect_request(re.compile(接口路径)) as request_info:
+            self.触发请求(触发方式)
+
+        request = request_info.value
+
+        try:
+            # 判断是否是 GET 请求
+            if request.method.upper() == 'GET':
+                print("这是一个 GET 请求")
+
+                # 从 URL 中提取查询参数
+                url = request.url
+                if '?' in url:
+                    query_string = url.split('?', 1)[1]  # 提取 ? 后面的部分
+                    params = parse_qs(query_string)  # 解析为字典格式
+
+                    # 将 list 类型的值转为单个字符串（如 a=1&a=2 → a=2）
+                    params = {k: v[0] if len(v) == 1 else v for k, v in params.items()}
+                    return params
+                else:
+                    print("GET 请求没有查询参数")
+                    return {}
+
+            # 非 GET 请求：尝试获取 post_data
+            post_data = request.post_data
+
+            if post_data is None:
+                print("请求没有 payload 数据")
+                return {}
+
+            # 解析 payload
+            if isinstance(post_data, str):
+                try:
+                    payload = json.loads(post_data)
+                except json.JSONDecodeError:
+                    payload = parse_qs(post_data)
+            elif isinstance(post_data, dict):
+                payload = post_data
+            else:
+                payload = post_data  # 如 FormData 等类型
+
+            # 判断是否加密（仅当 payload 是 dict 类型时才处理）
+            if isinstance(payload, dict) and payload.get("flag") == "encrypt":
+                encrypted_data_hex = payload.get("data")
+                decrypted_data = self.decrypt(encrypted_data_hex)
+                payload["data"] = decrypted_data
+
+            return payload
+
+        except Exception as e:
+            print(f"解析请求 payload 失败: {e}")
+            return {}
 
     def decrypt(self, encrypted_data_hex: str) -> dict:
         return decrypt_sm4_cbc(encrypted_data_hex, self.sm4_key, self.sm4_iv)

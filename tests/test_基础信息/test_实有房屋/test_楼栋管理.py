@@ -16,6 +16,9 @@ from pages.基础信息.实有房屋.楼栋管理 import PageFloor
 # 配置日志记录器
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+@pytest.fixture(scope="module")
+def 随机楼栋号():
+    return str(random.randint(1, 99))
 
 @pytest.fixture(scope="function")
 def 楼栋管理页面(浏览器已打开的页面):
@@ -45,13 +48,13 @@ class TestAdd(BaseCase):
                          db_connection,
                          小区名称, 楼栋号, 单元数, 楼层数, 楼栋名称, 经度, 纬度
                          ):
+        楼栋号 = str(random.randint(1, 99))
         # 统计数据库中的数据条数
         数据量_新增前 = 楼栋管理页面.统计数据库表中的记录数(db_connection)
         # 点击新增按钮
         楼栋管理页面.click_button("新增")
         self.log_step("点击新增按钮")
         # 填写表单信息
-        楼栋号 = str(random.randint(1, 99))
         楼栋管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(
             表单最上层定位=楼栋管理页面.page.locator('//div[@aria-label="楼栋信息"]'), 小区名称=小区名称, 楼栋号=楼栋号,
             单元数=单元数, 楼层数=楼层数, 楼栋名称=楼栋名称, 经度=经度, 纬度=纬度)

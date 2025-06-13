@@ -32,7 +32,7 @@ class PageHouseArchive(BaseQueryPage):
     #     return response.json()
 
     def 统计数据库表中的记录数(self, connection):
-        sql = """select count(*) as count from ybds_person;"""
+        sql = """select count(*) as count from ybds_person where del_flag = 0;"""
         db_data = self.get_db_data(connection, sql)
         return db_data[0]["count"]
 
