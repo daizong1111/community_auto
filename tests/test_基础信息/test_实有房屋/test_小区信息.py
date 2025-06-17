@@ -215,7 +215,7 @@ class TestAdd(BaseCase):
         #      ]
     )
     @allure.step("测试新增小区-失败-必填项缺失")
-    def test_add__miss_data(self, 小区信息页面,
+    def test_add_miss_data(self, 小区信息页面,
                             db_connection,
                             小区名称: object,
                             行政区域: object, 所属居委会: object,

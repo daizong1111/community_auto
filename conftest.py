@@ -8,11 +8,13 @@ import time
 
 """存放UI自动化测试过程中用到的测试夹具"""
 
+
 # 定义Playwright fixture，用于初始化Playwright实例
 @pytest.fixture(scope="session")
 def playwright() -> Playwright:
     with sync_playwright() as p:
         yield p
+
 
 # page fixture，用于每条测试用例单独打开浏览器
 @pytest.fixture(scope="function")
@@ -60,6 +62,17 @@ def browser(playwright):
 #     # 返回会议室管理页面对象
 #     yield page
 
+# 监听页面的请求
+# def requests(request):
+#     """监听请求"""
+#     if request.url == "cccc":
+#         return
+#     print("============================================")
+#     print(f"请求：{request.url}")
+#     print(f"请求头：{request.headers}")
+#     print("============================================")
+
+
 @pytest.fixture(scope="module")
 def 浏览器已打开的页面(browser):
     # 若浏览器已打开，则直接使用已打开的浏览器，否则创建一个新的浏览器实例
@@ -67,7 +80,11 @@ def 浏览器已打开的页面(browser):
     # 若该浏览器中有页面，则直接使用已打开的页面，否则创建一个新的页面
     page = context.pages[0] if context.pages else context.new_page()
     page.set_default_timeout(6000)  # 设置默认超时时间为 4000 毫秒
+
+    # page.on("response", requests)
+
     yield page
+
 
 # 用例运行失败自动截图
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -118,34 +135,37 @@ def pytest_runtest_makereport(item):
             print(error_msg)
             ...
 
+
 # 返回数据库连接，给所有的测试用例公用，所有的测试用例都执行完之后，自动关闭数据库连接
 @pytest.fixture(scope="session")
 def db_connection():
-   # 创建数据库连接
-   # db_config = {
-   #     "host": "114.96.83.242",
-   #     "port": "8306",
-   #     "user": "root",
-   #     "password": "Dxjc@2020",
-   #     "database": "chinaictc_sc_common_pre"
-   # }
-   # connection = mysql.connector.connect(**db_config)
-   connection = pymysql.connect(
-       host="114.96.83.242",
-       user="root",
-       port=8306,
-       password="Dxjc@2020",
-       database="chinaictc_sc_common_pre",
-       cursorclass=pymysql.cursors.DictCursor  # 如果你需要字典格式结果
-   )
-   yield connection  # 返回连接对象
-   # 测试结束后关闭连接
-   connection.close()
+    # 创建数据库连接
+    # db_config = {
+    #     "host": "114.96.83.242",
+    #     "port": "8306",
+    #     "user": "root",
+    #     "password": "Dxjc@2020",
+    #     "database": "chinaictc_sc_common_pre"
+    # }
+    # connection = mysql.connector.connect(**db_config)
+    connection = pymysql.connect(
+        host="114.96.83.242",
+        user="root",
+        port=8306,
+        password="Dxjc@2020",
+        database="chinaictc_sc_common_pre",
+        cursorclass=pymysql.cursors.DictCursor  # 如果你需要字典格式结果
+    )
+    yield connection  # 返回连接对象
+    # 测试结束后关闭连接
+    connection.close()
+
 
 @pytest.fixture(scope="module")
 def 查询页面(浏览器已打开的页面):
     查询页面 = BaseQueryPage(浏览器已打开的页面)
     yield 查询页面
+
 
 @pytest.fixture(scope="function")
 def 后置操作_刷新页面(浏览器已打开的页面):
@@ -155,6 +175,7 @@ def 后置操作_刷新页面(浏览器已打开的页面):
     # 等待网络请求完成
     expect(浏览器已打开的页面.get_by_text("系统加载中")).not_to_be_visible(timeout=5000)
 
+
 @pytest.fixture(scope="function")
 def 后置操作_重置查询条件(查询页面):
     yield 查询页面
@@ -163,8 +184,3 @@ def 后置操作_重置查询条件(查询页面):
     expect(查询页面.page.get_by_text("加载中")).not_to_be_visible(timeout=5000)
     # 等待网络请求完成
     # 查询页面.page.wait_for_load_state("networkidle")
-
-
-
-
-

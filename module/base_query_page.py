@@ -289,6 +289,10 @@ class BaseQueryPage(PageObject):
         """点击重置按钮"""
         self.get_reset_btn().click()
 
+    def 填写搜索框(self, kwargs:dict):
+        self.快捷操作_填写表单_增加根据数据类确定唯一表单版(**kwargs)
+        self.click_button("搜索")
+
     def 获取编辑按钮(self, 关键字):
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
                                                                                         has_text=关键字).first.locator(
