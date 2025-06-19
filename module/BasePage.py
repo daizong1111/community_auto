@@ -793,7 +793,7 @@ class PageObject:
 
     def 校验表单中数据成功修改(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
         # 强制等待，避免内容未更新
-        self.page.wait_for_timeout(1000)
+        self.page.wait_for_timeout(3000)
         # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
         页面上已有的表单项列表 = []
         已经有唯一表单项 = False
@@ -860,8 +860,8 @@ class PageObject:
             #     continue
             if 内容 is None:
                 continue
-            表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项,
-                                                                                            处理后的表单最上层定位)
+            表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项,处理后的表单最上层定位)
+
             assert 表单项中包含操作元素的最上级div.count() > 0, f"表单项: {表单项} 的最上级div未找到"
             内容_表单项 = 表单项中包含操作元素的最上级div.locator('input,textarea').input_value()
 
@@ -871,6 +871,19 @@ class PageObject:
             # print(内容_表单项)
             assert 内容_表单项_标准化 in 预期内容_标准化, \
                 f"表单项{表单项}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
+
+    def 获取提示弹窗(self):
+        return self.page.locator(".el-message-box")
+    def 获取提示弹窗中的确定按钮(self):
+        return self.获取提示弹窗().locator("button", has_text="确定")
+    def 点击提示弹窗中的确定按钮(self):
+        self.获取提示弹窗中的确定按钮().click()
+
+    def 跳转到某菜单(self, 菜单路径: str):
+        """"菜单路径如 小区信息/房屋管理 """
+        for 菜单名称 in 菜单路径.split("/"):
+            self.page.get_by_role("menuitem").get_by_text(菜单名称).click()
+
 
 
 if __name__ == '__main__':

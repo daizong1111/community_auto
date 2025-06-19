@@ -5,6 +5,7 @@ import pytest
 
 # 定义运行测试的函数
 def run_tests():
+    # print(os.environ['PATH'])
     # 获取系统当前时间
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     # 将时间拼接到文件名中
@@ -21,13 +22,17 @@ def run_tests():
                    # 'tests/test_基础信息/test_实有房屋/test_一房一档.py::TestAdd::test_add_miss_data',
                    # 'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestEdit::test_edit_success',
                    # 'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestDelete::test_delete_success'
-                   'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestAdd::test_add_miss_data'
+                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestAdd::test_add_success',
+                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestEdit::test_edit_success',
+                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestDelete::test_delete_success'
+                   'tests/test_基础信息/test_实有人口/test_人口信息.py'
 
                    ]
     # 运行 pytest
     pytest.main(pytest_args)
     # 生成HTML报告
     os.system(f"allure serve {results_dir}")
+
 
 
 # 主程序入口

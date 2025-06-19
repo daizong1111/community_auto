@@ -79,6 +79,42 @@ class BaseQueryPage(PageObject):
         # 定位表格中的所有行
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody/tr")
 
+    def get_column_values_by_name(self, column_name: str) -> list:
+        """
+        获取表格中当前页指定列名的所有字段值，去重以后的。
+
+        :param column_name: 表格列名（完全匹配）
+        :return: 指定列的所有字段值列表
+        """
+        # 定位表格主体
+        table_body = self.page.locator("(//table[@class='el-table__body'])[1]")
+
+        # 获取表头行的所有列名单元格
+        header_cells = self.page.locator(".el-table__header th").all()
+
+        # 查找目标列的索引
+        column_index = -1
+        for idx, cell in enumerate(header_cells):
+            print(cell.inner_text())
+            if cell.inner_text().strip() == column_name:
+                column_index = idx
+                break
+
+        assert column_index != -1, f"未找到列名为 '{column_name}' 的列"
+
+        # 获取所有数据行
+        rows = table_body.locator("tbody > tr").all()
+
+        # 提取每行对应列的数据
+        column_values = []
+        for row in rows:
+            cell_value = row.locator(f"td:nth-child({column_index + 1})").inner_text().strip()
+            column_values.append(cell_value)
+        # 去重
+        # column_values = list(set(column_values))
+
+        return column_values
+
     def 定位器_表格(self) -> Locator:
         return self.page.locator("(//table[@class='el-table__body'])[1]")
 
@@ -289,9 +325,21 @@ class BaseQueryPage(PageObject):
         """点击重置按钮"""
         self.get_reset_btn().click()
 
+    def 点击展开筛选(self):
+        展开筛选按钮 = self.page.get_by_text("展开筛选").locator("visible=true")
+        if 展开筛选按钮.is_visible():
+            展开筛选按钮.click()
+
+    def 点击收起筛选(self):
+        收起筛选按钮 = self.page.get_by_text("收起筛选").locator("visible=true")
+        if 收起筛选按钮.is_visible():
+            收起筛选按钮.click()
+
     def 填写搜索框(self, kwargs:dict):
         self.快捷操作_填写表单_增加根据数据类确定唯一表单版(**kwargs)
         self.click_button("搜索")
+        # 等待表格加载出来
+        self.page.wait_for_timeout(1000)
 
     def 获取编辑按钮(self, 关键字):
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
