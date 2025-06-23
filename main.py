@@ -22,10 +22,16 @@ def run_tests():
                    # 'tests/test_基础信息/test_实有房屋/test_一房一档.py::TestAdd::test_add_miss_data',
                    # 'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestEdit::test_edit_success',
                    # 'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestDelete::test_delete_success'
-                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestAdd::test_add_success',
-                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestEdit::test_edit_success',
-                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestDelete::test_delete_success'
-                   'tests/test_基础信息/test_实有人口/test_人口信息.py'
+                   # 'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py::TestAdd::test_add_success',
+                   # 'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py::TestEdit::test_edit_success',
+                   # 'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py::TestDelete::test_delete_success'
+                   'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py'
+
+                   # 'tests/test_基础信息/test_实有车辆/test_车辆信息.py'
+                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py'
+                   # 'tests/test_基础信息/test_实有人口/test_特殊人群.py'
+                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestAdd::test_add_success'
+                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestAdd::test_add_repeat_validation'
 
                    ]
     # 运行 pytest

@@ -7,7 +7,7 @@ from datetime import datetime
 from urllib.parse import parse_qs
 
 from playwright.sync_api import expect, Locator
-from module.BasePage import PageObject
+from module.BasePageNew import PageObject
 from gmssl import sm4
 
 

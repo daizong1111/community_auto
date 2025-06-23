@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from playwright.sync_api import sync_playwright, Playwright, Page, expect
 
@@ -71,12 +73,26 @@ def browser(playwright):
 #     print(f"请求：{request.url}")
 #     print(f"请求头：{request.headers}")
 #     print("============================================")
+def slow_response(route, request):
+    # 延迟请求处理，模拟高延迟网络
+    print("请求开始处理...")
+    time.sleep(5)  # 5000ms 延迟
 
+    # 可选：修改响应体大小，模拟低带宽
+    route.continue_()
+    # 如果你需要截获并修改响应内容：
+    # response = route.fetch()
+    # body = response.json()
+    # 自定义返回数据，例如裁剪大文件等
+    # route.fulfill(response=response, json=body)
 
 @pytest.fixture(scope="module")
 def 浏览器已打开的页面(browser):
     # 若浏览器已打开，则直接使用已打开的浏览器，否则创建一个新的浏览器实例
     context = browser.contexts[0] if browser.contexts else browser.new_context()
+    # 模拟弱网环境
+    # 拦截所有请求，模拟网络延迟
+    # context.route(re.compile(r"https?://.*"), slow_response)
     # 若该浏览器中有页面，则直接使用已打开的页面，否则创建一个新的页面
     page = context.pages[0] if context.pages else context.new_page()
     page.set_default_timeout(6000)  # 设置默认超时时间为 4000 毫秒
