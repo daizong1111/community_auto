@@ -33,6 +33,12 @@ def 车辆黑名单页面(浏览器已打开的页面):
     page = PageCarBlackList(浏览器已打开的页面)
     yield page
 
+# @pytest.fixture(scope="class")
+#
+# def 前置操作_新增一条数据(车辆黑名单页面):
+#     testadd = TestAdd()
+#     testadd.test_add_success(车辆黑名单页面, 表单数据)
+
 
 # 定义一个模块级变量，用于标记是否新增成功
 NEW_PERSON_ADDED = False

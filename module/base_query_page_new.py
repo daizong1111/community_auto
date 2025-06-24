@@ -79,6 +79,10 @@ class BaseQueryPage(PageObject):
         # 定位表格中的所有行
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody/tr")
 
+    def 获取表格中指定行的所有字段值(self, index) -> list:
+        """ index 为行号，从1开始 """
+        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody/tr").nth(index-1).locator("td").all_text_contents()[:-1]
+
     def get_column_values_by_name(self, column_name: str) -> list:
         # self.等待表格加载完成()
         # 等待表格加载完成并不能真正等到它加载完成，要更换
@@ -360,13 +364,19 @@ class BaseQueryPage(PageObject):
         # 等待表格加载出来
         self.等待表格加载完成()
 
-    def 获取编辑按钮(self, 关键字):
-        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
-                                                                                        has_text=关键字).first.locator(
-            "button", has_text="编辑")
+    def 获取表格中某行按钮(self, 关键字=None, 行号=None, 按钮名:str=None):
+        if 行号:
+            return self.page.locator("(//table[@class='el-table__body'])[1]/tbody//tr").nth(行号-1).locator("button",
+                                                                                                           has_text=按钮名)
+        elif 关键字:
+            return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
+                                                                                            has_text=关键字).first.locator(
+                "button", has_text=按钮名)
+        else:
+            raise Exception("请输入关键字或行号")
 
-    def 点击编辑按钮(self, 关键字):
-        self.获取编辑按钮(关键字).evaluate("(el) => el.click()")
+    def 点击表格中某行按钮(self, 关键字=None, 行号=None, 按钮名:str=None):
+        self.获取表格中某行按钮(关键字=关键字,行号=行号, 按钮名=按钮名).evaluate("(el) => el.click()")
 
     def 获取详情按钮(self, 关键字):
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",

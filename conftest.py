@@ -76,7 +76,7 @@ def browser(playwright):
 def slow_response(route, request):
     # 延迟请求处理，模拟高延迟网络
     print("请求开始处理...")
-    time.sleep(5)  # 5000ms 延迟
+    time.sleep(1)  # 5000ms 延迟
 
     # 可选：修改响应体大小，模拟低带宽
     route.continue_()

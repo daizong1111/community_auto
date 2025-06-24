@@ -27,12 +27,16 @@ class PageSpecialPeople(BaseQueryPage):
             表单项 = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
                 "visible=true")
             # 清空内容
-            下拉箭头_下拉框 = 表单项.locator("i.el-select__caret").locator("visible=true")
+            # 下拉箭头_下拉框 = 表单项.locator("i.el-select__caret").locator("visible=true")
+            try:
+                表单项.locator("i.el-select__caret").locator("visible=true").hover(timeout=1000)
+            except:
+                pass
             # 将鼠标悬停到下拉箭头_下拉框上面
-            box = 下拉箭头_下拉框.first.bounding_box()
-            self.page.mouse.move(100, 100, steps=100)
-
-            self.page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2, steps=100)
+            # box = 下拉箭头_下拉框.first.bounding_box()
+            # self.page.mouse.move(100, 100, steps=100)
+            #
+            # self.page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2, steps=100)
             # 下拉箭头_下拉框.hover(force=True)
             关闭按钮 = 表单项.locator(".el-icon-circle-close").locator("visible=true")
             expect(关闭按钮).to_be_visible()

@@ -160,7 +160,7 @@ class PageObject:
             # self.page.locator(".ant-select-dropdown").locator("visible=true").get_by_text(需要选择的项).click(timeout=timeout)
             选择面板.get_by_text(需要选择的项, exact=True).first.click(timeout=timeout)
 
-        表单项的标签 = 表单最上层定位.locator("label",has_text=表单项名称).locator("visible=true")
+        表单项的标签 = 表单最上层定位.locator("label", has_text=表单项名称).locator("visible=true")
         表单项的标签.click()
 
     def 表单_级联选择器选择(self, 表单项名称: str, 路径: str, 表单最上层定位: Locator = None, timeout: float = None):
@@ -212,7 +212,7 @@ class PageObject:
             else:
                 # 点击找到的菜单项，带有超时设置
                 item_locator.click(timeout=timeout)
-        表单项的标签 = 表单最上层定位.locator("label",has_text=表单项名称).locator("visible=true")
+        表单项的标签 = 表单最上层定位.locator("label", has_text=表单项名称).locator("visible=true")
         表单项的标签.click()
         # 点击当前表单项外的其他稳定元素，如页面顶部、标题栏等，关闭选择面板，
         # self.page.locator("header").click()
@@ -741,10 +741,11 @@ class PageObject:
             #         print(loc.text_content())
 
         for 表单项, 内容 in kwargs.items():
-            表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项,处理后的表单最上层定位)
+            表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项,
+                                                                                            处理后的表单最上层定位)
             assert 表单项中包含操作元素的最上级div.count() > 0, f"表单项: {表单项} 的最上级div未找到"
 
-            if 内容 is None:                # 校验是否为 disabled 或 readonly 状态
+            if 内容 is None:  # 校验是否为 disabled 或 readonly 状态
                 # 定位到 input 或 textarea 元素
                 输入框 = 表单项中包含操作元素的最上级div.locator("input,textarea").first
                 assert 输入框.is_disabled() or 输入框.get_attribute("readonly") is not None, \
@@ -776,7 +777,7 @@ class PageObject:
             # elif 表单项中包含操作元素的最上级div.get_by_role("switch").count():
             #     self.表单_switch开关(表单项名称=表单项, 开关状态=内容, 表单最上层定位=处理后的表单最上层定位,
             #                          timeout=timeout)
-            elif 表单项中包含操作元素的最上级div.locator(".el-date-editor--datetimerange").count():
+            elif 表单项中包含操作元素的最上级div.locator(".el-date-editor--datetimerange,.el-date-editor--daterange").count():
                 self.表单_日期时间范围选择器_左右面板联动(表单项名称=表单项, 日期=内容,
                                                           表单最上层定位=处理后的表单最上层定位,
                                                           timeout=timeout)
@@ -786,9 +787,11 @@ class PageObject:
             else:
                 pytest.fail(f"不支持的快捷表单填写:\n{表单项}:{内容}")
 
-    def 校验表单中数据成功修改(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
+    def 校验表单中数据成功修改(self, 表单最上层定位: Locator = None, timeout=None, 必填表单项: str = None, **kwargs):
         # 强制等待，避免内容未更新
-        self.page.wait_for_timeout(3000)
+        self.page.wait_for_timeout(1000)
+        # 等待整个表单可见
+        # expect(self.page.locator(".el-drawer__wrapper")).to_be_visible()
         # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
         页面上已有的表单项列表 = []
         已经有唯一表单项 = False
@@ -849,6 +852,19 @@ class PageObject:
             #     # for loc in 包含可见表单项的loc.all():
             #     #     loc.highlight()
             #     #     print(loc.text_content())
+        if 必填表单项 is not None:
+            loc_必填项 = self.locators.表单项中包含操作元素的最上级div(必填表单项, 处理后的表单最上层定位)
+            expect(loc_必填项).to_be_visible()
+            item = 0
+            while True:
+                div_必填项 = self.locators.表单项中包含操作元素的最上级div(必填表单项, 处理后的表单最上层定位)
+                必填项文本 = div_必填项.locator('input,textarea').input_value()
+                if len(必填项文本) > 1:
+                    break
+                self.page.wait_for_timeout(500)
+                item += 1
+                if item > 40:
+                    raise Exception("数据加载超时")
 
         for 表单项, 内容 in kwargs.items():
             # if not 内容:
@@ -856,6 +872,7 @@ class PageObject:
             if 内容 is None:
                 continue
             表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项,处理后的表单最上层定位)
+
 
             assert 表单项中包含操作元素的最上级div.count() > 0, f"表单项: {表单项} 的最上级div未找到"
             内容_表单项 = 表单项中包含操作元素的最上级div.locator('input,textarea').input_value()
@@ -869,8 +886,10 @@ class PageObject:
 
     def 获取提示弹窗(self):
         return self.page.locator(".el-message-box")
+
     def 获取提示弹窗中的确定按钮(self):
         return self.获取提示弹窗().locator("button", has_text="确定")
+
     def 点击提示弹窗中的确定按钮(self):
         self.获取提示弹窗中的确定按钮().click()
 
@@ -878,7 +897,6 @@ class PageObject:
         """"菜单路径如 小区信息/房屋管理 """
         for 菜单名称 in 菜单路径.split("/"):
             self.page.get_by_role("menuitem").get_by_text(菜单名称).click()
-
 
 
 if __name__ == '__main__':
