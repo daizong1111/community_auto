@@ -124,8 +124,8 @@ class BaseQueryPage(PageObject):
         return column_values
 
     def 等待表格加载完成(self):
-        expect(self.page.get_by_text("加载中")).not_to_be_visible(timeout=6000)
         self.page.wait_for_timeout(1000)
+        expect(self.page.get_by_text("加载中")).not_to_be_visible(timeout=6000)
     def 获取页面统计的总数据量(self):
         self.等待表格加载完成()
         self.page.locator(".el-pagination__total").wait_for()
@@ -398,12 +398,6 @@ class BaseQueryPage(PageObject):
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
                                                                                         has_text=关键字).first.locator(
             "button", has_text=按钮名称)
-
-    def 点击表格中的按钮(self, 关键字, 按钮名称: str):
-        self.获取表格中的按钮(关键字, 按钮名称).evaluate("(el) => el.click()")
-
-    def 定位器_勾选框_包含关键字(self, 关键字: str):
-        return self.定位器_表格().locator("tr", has_text=关键字)
 
     def 点击批量删除按钮(self, 关键字, 删除数据数量):
         已勾选数据量 = 0

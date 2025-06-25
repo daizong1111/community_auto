@@ -23,11 +23,6 @@ from pages.基础信息.实有设备 import PageRealEquipment
 # 配置日志记录器
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# fake生成随机车牌号
-随机车牌号 = f"苏A{str(random.randint(10000, 99999))}"
-车牌号_修改后 = f"苏A{str(random.randint(10000, 99999))}"
-
-
 @pytest.fixture(scope="module")
 def 实有设备页面(浏览器已打开的页面):
     # 将页面封装为实有设备页面
@@ -74,10 +69,6 @@ class TestDetail(BaseCase):
 
 @pytest.mark.usefixtures("实有设备页面")  # 显式声明夹具
 class TestEdit(BaseCase):
-    # def setup_class(self):
-    #     if not NEW_PERSON_ADDED:
-    #         pytest.skip("新增用例执行失败，跳过修改相关测试")
-
     @pytest.mark.usefixtures("后置操作_刷新页面")
     @pytest.mark.usefixtures("后置操作_修改成功后恢复数据")
     @pytest.mark.parametrize(
@@ -103,7 +94,7 @@ class TestEdit(BaseCase):
         实有设备页面.click_button("搜索")
         实有设备页面.等待表格加载完成()
         # 点击编辑按钮
-        实有设备页面.点击编辑按钮(None)
+        实有设备页面.点击表格中某行按钮(行号=1, 按钮名="编辑")
         self.log_step("点击编辑按钮")
         实有设备页面.page.wait_for_timeout(1000)
         # 填写表单信息
@@ -126,7 +117,7 @@ class TestEdit(BaseCase):
         实有设备页面.click_button("搜索")
         实有设备页面.等待表格加载完成()
         # 检查表格中数据是否成功修改
-        实有设备页面.点击表格中的按钮(None, "编辑")
+        实有设备页面.点击表格中某行按钮(行号=1, 按钮名="编辑")
         实有设备页面.校验表单中数据成功修改(**{"设备名称：":表单数据_基础.get("设备名称："),
                                             "设备IP：":表单数据_基础.get("设备IP："),
                                             "设备进出：":表单数据_基础.get("设备进出："),
