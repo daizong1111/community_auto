@@ -34,17 +34,6 @@ def 类型管理页面(浏览器已打开的页面):
     page = PageTypeManage(浏览器已打开的页面)
     yield page
 
-# @pytest.fixture(scope="class")
-# def 前置操作_新增一个类型_填写任务频率和任务处理时效(类型管理页面):
-#     test_add = TestAdd()
-#     表单数据_基础 = {"类型名称": f"新增-成功{time_string}", "场所类别": "商铺"}
-#     表单数据_检查指引维护 = {"1": "请耐心检查"}
-#     test_add.test_add_success(类型管理页面, 表单数据_基础, 表单数据_检查指引维护)
-#     yield
-#     # 测试结束后，删除该数据
-#     test_delete = TestDelete()
-#     test_delete.test_delete_success(类型管理页面, {"类型名称": f"新增-成功{time_string}"})
-
 @pytest.fixture(scope="class")
 def 前置操作_自动下发和启用禁用(类型管理页面):
     """
@@ -71,15 +60,6 @@ def 前置操作_自动下发和启用禁用(类型管理页面):
     test_delete = TestDelete()
     for 类型名称 in inserted_names:
         test_delete.test_delete_success(类型管理页面, {"类型名称": 类型名称})
-
-
-
-# @pytest.fixture(scope="class")
-#
-# def 前置操作_新增一条数据(类型管理页面):
-#     testadd = TestAdd()
-#     testadd.test_add_success(类型管理页面, 表单数据)
-
 
 # 定义一个模块级变量，用于标记是否新增成功
 NEW_PERSON_ADDED = False

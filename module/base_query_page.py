@@ -123,7 +123,7 @@ class BaseQueryPage(PageObject):
         return self.page.locator("(//table[@class='el-table__body'])[1]/tbody/tr").nth(index-1).locator("td").all_text_contents()[:-1]
     def 等待表格加载完成(self):
         self.page.wait_for_timeout(1000)
-        expect(self.page.locator(".el-loading-spinner")).not_to_be_visible(timeout=5000)
+        expect(self.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=5000)
         # expect(self.page.get_by_text("加载中")).not_to_be_visible(timeout=6000)
         # self.page.wait_for_timeout(1000)
     def 获取页面统计的总数据量(self):

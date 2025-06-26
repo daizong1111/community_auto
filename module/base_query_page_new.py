@@ -77,11 +77,11 @@ class BaseQueryPage(PageObject):
 
     def get_table_rows(self):
         # 定位表格中的所有行
-        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody/tr")
+        return self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").locator("xpath=//tbody/tr")
 
     def 获取表格中指定行的所有字段值(self, index) -> list:
         """ index 为行号，从1开始 """
-        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody/tr").nth(index-1).locator("td").all_text_contents()[:-1]
+        return self.get_table_rows().nth(index-1).locator("td").all_text_contents()[:-1]
 
     def get_column_values_by_name(self, column_name: str) -> list:
         # self.等待表格加载完成()
@@ -94,7 +94,7 @@ class BaseQueryPage(PageObject):
         :return: 指定列的所有字段值列表
         """
         # 定位表格主体
-        table_body = self.page.locator("(//table[@class='el-table__body'])[1]")
+        table_body = self.page.locator("(//table[@class='el-table__body'])").locator("visible=true")
 
         # 获取表头行的所有列名单元格
         header_cells = self.page.locator(".el-table__header th").all()
@@ -125,11 +125,12 @@ class BaseQueryPage(PageObject):
 
     def 等待表格加载完成(self):
         self.page.wait_for_timeout(1000)
-        expect(self.page.get_by_text("加载中")).not_to_be_visible(timeout=6000)
+        expect(self.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=5000)
+
     def 获取页面统计的总数据量(self):
         self.等待表格加载完成()
-        self.page.locator(".el-pagination__total").wait_for()
-        text = self.page.locator(".el-pagination__total").inner_text().strip()
+        # self.page.locator(".el-pagination__total").wait_for()
+        text = self.page.locator(".el-pagination__total").locator("visible=true").inner_text().strip()
         match = re.search(r'\d+', text)
         if match:
             number = match.group()
