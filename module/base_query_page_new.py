@@ -77,7 +77,7 @@ class BaseQueryPage(PageObject):
 
     def get_table_rows(self):
         # 定位表格中的所有行
-        return self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").locator("xpath=//tbody/tr")
+        return self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").first.locator("xpath=//tbody/tr")
 
     def 获取表格中指定行的所有字段值(self, index) -> list:
         """ index 为行号，从1开始 """
@@ -94,7 +94,7 @@ class BaseQueryPage(PageObject):
         :return: 指定列的所有字段值列表
         """
         # 定位表格主体
-        table_body = self.page.locator("(//table[@class='el-table__body'])").locator("visible=true")
+        table_body = self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").first
 
         # 获取表头行的所有列名单元格
         header_cells = self.page.locator(".el-table__header th").all()
@@ -125,7 +125,7 @@ class BaseQueryPage(PageObject):
 
     def 等待表格加载完成(self):
         self.page.wait_for_timeout(1000)
-        expect(self.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=5000)
+        expect(self.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=10000)
 
     def 获取页面统计的总数据量(self):
         self.等待表格加载完成()
@@ -367,38 +367,36 @@ class BaseQueryPage(PageObject):
 
     def 获取表格中某行按钮(self, 关键字=None, 行号=None, 按钮名:str=None):
         if 行号:
-            return self.page.locator("(//table[@class='el-table__body'])[1]/tbody//tr").nth(行号-1).locator("button",
-                                                                                                           has_text=按钮名)
+            return self.get_table_rows().nth(行号-1).locator("button",has_text=按钮名)
         elif 关键字:
-            return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
-                                                                                            has_text=关键字).first.locator(
-                "button", has_text=按钮名)
+            return self.get_table_rows().filter(has_text=关键字).first.locator("button", has_text=按钮名)
+
         else:
             raise Exception("请输入关键字或行号")
 
     def 点击表格中某行按钮(self, 关键字=None, 行号=None, 按钮名:str=None):
         self.获取表格中某行按钮(关键字=关键字,行号=行号, 按钮名=按钮名).evaluate("(el) => el.click()")
 
-    def 获取详情按钮(self, 关键字):
-        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
-                                                                                        has_text=关键字).first.locator(
-            "button", has_text="详情")
+    # def 获取详情按钮(self, 关键字):
+    #     return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
+    #                                                                                     has_text=关键字).first.locator(
+    #         "button", has_text="详情")
+    #
+    # def 点击详情按钮(self, 关键字):
+    #     self.获取详情按钮(关键字).evaluate("(el) => el.click()")
+    #
+    # def 获取删除按钮(self, 关键字):
+    #     return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
+    #                                                                                     has_text=关键字).first.locator(
+    #         "button", has_text="删除")
+    #
+    # def 点击删除按钮(self, 关键字):
+    #     self.获取删除按钮(关键字).evaluate("(el) => el.click()")
 
-    def 点击详情按钮(self, 关键字):
-        self.获取详情按钮(关键字).evaluate("(el) => el.click()")
-
-    def 获取删除按钮(self, 关键字):
-        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
-                                                                                        has_text=关键字).first.locator(
-            "button", has_text="删除")
-
-    def 点击删除按钮(self, 关键字):
-        self.获取删除按钮(关键字).evaluate("(el) => el.click()")
-
-    def 获取表格中的按钮(self, 关键字, 按钮名称:str):
-        return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
-                                                                                        has_text=关键字).first.locator(
-            "button", has_text=按钮名称)
+    def 切换到某标签页(self, 标签页名称:str):
+        self.page.locator(".el-tabs__item").get_by_text(标签页名称,exact=True).click()
+        # 等待表格加载完成
+        self.等待表格加载完成()
 
     def 点击批量删除按钮(self, 关键字, 删除数据数量):
         已勾选数据量 = 0
@@ -408,6 +406,16 @@ class BaseQueryPage(PageObject):
             if 已勾选数据量 == 删除数据数量:
                 break
         self.click_button("批量删除")
+
+    def 获取抽屉(self):
+        return self.page.locator(".el-drawer").locator("visible=true")
+    # def 点击抽屉中的按钮(self, 按钮名称):
+    #     self.获取抽屉().locator("button", has_text=按钮名称).click()
+    def 关闭抽屉(self):
+        self.click_button("取消",按钮的父元素=self.获取抽屉())
+        # self.点击抽屉中的按钮("取 消")
+        self.点击提示弹窗中的确定按钮()
+        expect(self.获取抽屉()).not_to_be_visible()
 
     def 获取查询接口响应的数据(self, 按钮名称: str, 接口路径: str):
         """

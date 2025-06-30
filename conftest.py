@@ -199,6 +199,6 @@ def 后置操作_重置查询条件(查询页面):
     查询页面.click_reset_btn()
     # expect(查询页面.page.get_by_text("加载中")).not_to_be_visible(timeout=5000)
     expect(查询页面.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=5000)
-
     # 等待网络请求完成
     # 查询页面.page.wait_for_load_state("networkidle")
+

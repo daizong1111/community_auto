@@ -1,5 +1,5 @@
 
-from playwright.sync_api import Page, Locator, sync_playwright
+from playwright.sync_api import Page, Locator, sync_playwright, expect
 
 from module.BasePageNew import PageObject
 from module.base_query_page_new import BaseQueryPage
@@ -60,7 +60,13 @@ class PageStoreInfo(BaseQueryPage):
         return self.获取弹窗_删除申请().locator("xpath=//textarea[@placeholder='请输入删除原因']")
 
     def 填写输入框_删除原因(self, 删除原因: str):
-        self.获取输入框_删除原因().fill(删除原因)
+        输入框_删除原因 = self.获取输入框_删除原因()
+        输入框_删除原因.click()
+        输入框_删除原因.clear()
+        输入框_删除原因.focus()
+        输入框_删除原因.press_sequentially(删除原因, delay=0)
+        输入框_删除原因.blur()
+        expect(self.获取输入框_删除原因()).to_have_value(删除原因)
 
 if __name__ == '__main__':
     with sync_playwright() as playwright:

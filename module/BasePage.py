@@ -893,10 +893,21 @@ class PageObject:
     def 点击提示弹窗中的确定按钮(self):
         self.获取提示弹窗中的确定按钮().click()
 
-    def 跳转到某菜单(self, 菜单路径: str):
-        """"菜单路径如 小区信息/房屋管理 """
-        for 菜单名称 in 菜单路径.split("/"):
+    # def 跳转到某菜单(self, 菜单路径: str):
+    #     """"菜单路径如 小区信息/房屋管理 """
+    #     for 菜单名称 in 菜单路径.split("/"):
+    #         self.page.get_by_role("menuitem").get_by_text(菜单名称).click()
+    def 跳转到某菜单(self, 顶部菜单名称:str=None, 左侧菜单路径: str= None):
+        """"左侧菜单路径如 小区信息/房屋管理 """
+        if 顶部菜单名称 is not None:
+            顶部菜单按钮 = self.page.locator('.meunBtn').get_by_text(顶部菜单名称,exact=True)
+            顶部菜单按钮.click()
+        for 菜单名称 in 左侧菜单路径.split("/"):
             self.page.get_by_role("menuitem").get_by_text(菜单名称).click()
+
+        # 等待页面加载完成
+        # self.page.wait_for_load_state('load')
+        self.page.wait_for_timeout(1000)
 
 
 if __name__ == '__main__':

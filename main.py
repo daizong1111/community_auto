@@ -21,22 +21,20 @@ def run_tests():
                    # 执行指定的用例文件(不写则执行所有的用例)
                    # 'tests/test_基础信息/test_实有房屋/test_一房一档.py::TestAdd::test_add_miss_data',
                    # 'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestEdit::test_edit_success',
-                   # 'tests/test_基础信息/test_实有房屋/test_小区信息.py::TestDelete::test_delete_success'
-                   # 'tests/test_基础信息/test_场所管理/test_类型管理.py::TestAdd::test_add_success',
-                   # 'tests/test_基础信息/test_场所管理/test_类型管理.py::TestEdit::test_edit_success',
-                   # 'tests/test_基础信息/test_场所管理/test_类型管理.py::TestDelete::test_delete_success',
-                   'tests/test_基础信息/test_场所管理/test_场所信息/test_商铺信息.py::TestAdd::test_add_success',
-                   'tests/test_基础信息/test_场所管理/test_场所信息/test_商铺信息.py::TestEdit',
 
-                   # 'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py'
 
-                   # 'tests/test_基础信息/test_实有车辆/test_车辆信息.py::TestAdd::test_add_success',
-                   # 'tests/test_基础信息/test_实有车辆/test_车辆信息.py::TestAdd::test_add_success'
-
-                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py'
-                   # 'tests/test_基础信息/test_实有人口/test_特殊人群.py'
-                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestAdd::test_add_success'
-                   # 'tests/test_基础信息/test_实有人口/test_人口信息.py::TestAdd::test_add_repeat_validation'
+                   # 'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py',
+                   # 'tests/test_基础信息/test_实有设备.py',
+                   # 'tests/test_基础信息/test_场所管理/test_类型管理.py',
+                   # 'tests/test_基础信息/test_场所管理/test_场所信息/test_商铺信息.py::TestAdd::test_add_success',
+                   # 'tests/test_基础信息/test_场所管理/test_场所信息/test_商铺信息.py::TestEdit::test_edit_success',
+                   # 'tests/test_基础信息/test_场所管理/test_场所信息/test_商铺信息.py::TestDelete'
+                   'tests/test_基础信息/test_场所管理/test_场所信息/test_单位信息.py::TestAdd::test_add_success',
+                   # 'tests/test_基础信息/test_场所管理/test_场所信息/test_单位信息.py::TestEdit::test_edit_success',
+                   'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py::TestAdd::test_add_success',
+                   # 'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py::TestEdit::test_edit_success',
+                   # 'tests/test_基础信息/test_场所管理/test_场所信息/test_单位信息.py::TestDelete'
+                   # 'tests/test_基础信息/test_场所管理/test_场所信息/test_单位信息.py',
 
                    ]
     # 运行 pytest

@@ -31,6 +31,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def 车辆黑名单页面(浏览器已打开的页面):
     # 将页面封装为车辆黑名单页面
     page = PageCarBlackList(浏览器已打开的页面)
+    page.跳转到某菜单('基础信息', '实有车辆/车辆黑名单')
     yield page
 
 # @pytest.fixture(scope="class")
@@ -179,7 +180,7 @@ class TestEdit(BaseCase):
             **表单数据)
         self.log_step("填写表单信息")
         # 点击提交按钮
-        车辆黑名单页面.click_button("确定")
+        车辆黑名单页面.click_button("确 定")
         self.log_step("点击提交按钮")
         # 点击提示弹窗中的确定按钮
         # 车辆黑名单页面.点击提示弹窗中的确定按钮()
