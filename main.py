@@ -29,9 +29,11 @@ def run_tests():
                    # 'tests/test_基础信息/test_场所管理/test_场所信息/test_商铺信息.py::TestAdd::test_add_success',
                    # 'tests/test_基础信息/test_场所管理/test_场所信息/test_商铺信息.py::TestEdit::test_edit_success',
                    # 'tests/test_基础信息/test_场所管理/test_场所信息/test_商铺信息.py::TestDelete'
-                   'tests/test_基础信息/test_场所管理/test_场所信息/test_单位信息.py::TestAdd::test_add_success',
+                   # 'tests/test_基础信息/test_场所管理/test_场所信息/test_单位信息.py::TestAdd::test_add_success',
                    # 'tests/test_基础信息/test_场所管理/test_场所信息/test_单位信息.py::TestEdit::test_edit_success',
-                   'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py::TestAdd::test_add_success',
+                   # 'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py::TestAdd::test_add_success',
+                   r'tests/test_网格管理/test_事件管理.py::TestProcessPcLowToHigh',
+
                    # 'tests/test_基础信息/test_实有车辆/test_车辆黑名单.py::TestEdit::test_edit_success',
                    # 'tests/test_基础信息/test_场所管理/test_场所信息/test_单位信息.py::TestDelete'
                    # 'tests/test_基础信息/test_场所管理/test_场所信息/test_单位信息.py',

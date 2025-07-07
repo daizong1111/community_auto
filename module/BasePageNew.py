@@ -216,7 +216,7 @@ class PageObject:
         # if dropdown.is_visible():
         #     表单元素.click()
 
-    def 表单_日期时间选择器(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None, timeout: float = None):
+    def 表单_日期时间选择器(self, 表单项名称: str=None, 定位器:Locator=None, 日期: str=None, 表单最上层定位: Locator = None, timeout: float = None):
         """
         填写基于 Element Plus 的 el-date-picker 控件的日期表单项（通过点击选择）。
 
@@ -230,7 +230,9 @@ class PageObject:
         from datetime import datetime
         if 日期 is None:
             return
-        if 表单最上层定位:
+        if 定位器:
+            date_picker = 定位器
+        elif 表单最上层定位:
             date_picker = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称))
         else:
             date_picker = self.locators.表单项中包含操作元素的最上级div(表单项名称)
@@ -435,7 +437,7 @@ class PageObject:
         if need_click is True:
             time_panel.get_by_text("确定").click(force=True, timeout=timeout)
 
-    def 表单_日期时间范围选择器_左右面板联动(self, 表单项名称: str, 日期: str, 表单最上层定位: Locator = None,
+    def 表单_日期时间范围选择器_左右面板联动(self, 定位器:Locator=None, 表单项名称: str=None, 日期: str=None, 表单最上层定位: Locator = None,
                                              timeout: float = None):
         """
         填写基于 Element Plus 的 el-date-picker 控件的日期表单项（通过点击选择）。
@@ -448,8 +450,9 @@ class PageObject:
         """
         if 日期 is None:
             return
-
-        if 表单最上层定位:
+        if 定位器:
+            date_picker = 定位器
+        elif 表单最上层定位:
             date_picker = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称))
         else:
             date_picker = self.locators.表单项中包含操作元素的最上级div(表单项名称)
@@ -678,7 +681,7 @@ class PageObject:
         time_panel.get_by_text("确定").click(timeout=timeout)
         expect(time_panel).to_be_hidden(timeout=timeout)
 
-    def 表单_文件上传(self, 表单项名称: str, 文件路径: str, 表单最上层定位: Locator = None, timeout: float = None):
+    def 表单_文件上传(self, 定位器:Locator=None, 表单项名称: str=None, 文件路径: str=None, 表单最上层定位: Locator = None, timeout: float = None):
         """
         在指定表单项中上传文件。
 
@@ -690,7 +693,9 @@ class PageObject:
         if 文件路径 is None:
             return
 
-        if 表单最上层定位:
+        if 定位器:
+            表单项中包含操作元素的最上级div = 定位器
+        elif 表单最上层定位:
             # 注意：这个input元素不是一个可见元素，不要对其进行可见性过滤
             表单项中包含操作元素的最上级div = 表单最上层定位.locator(
                 self.locators.表单项中包含操作元素的最上级div(表单项名称))
@@ -786,7 +791,7 @@ class PageObject:
             # elif 表单项中包含操作元素的最上级div.get_by_role("switch").count():
             #     self.表单_switch开关(表单项名称=表单项, 开关状态=内容, 表单最上层定位=处理后的表单最上层定位,
             #                          timeout=timeout)
-            elif 定位器.locator(".el-date-editor--datetimerange").count():
+            elif 定位器.locator(".el-date-editor--datetimerange, .el-date-editor--daterange").count():
                 self.表单_日期时间范围选择器_左右面板联动(定位器=定位器, 日期=内容, timeout=timeout)
 
 

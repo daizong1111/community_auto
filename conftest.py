@@ -1,12 +1,25 @@
 import re
 
 import pytest
+from joblib.testing import timeout
 from playwright.sync_api import sync_playwright, Playwright, Page, expect
 
+from module.BasePageNew import PageObject
 from module.base_query_page import BaseQueryPage
 import pymysql
 import allure
 import time
+
+from pages.login_page_h5 import LoginPageH5
+from pages.login_page_pc import LoginPagePc
+from pages.pages_h5.首页 import PageHome
+from pages.pages_h5.个人中心 import PagePersonalCenter
+
+# 导入用户配置信息，以字典形式保存
+from user_data import USERS_BY_ROLE
+
+# 存放角色到page的映射
+role_to_page = {}
 
 """存放UI自动化测试过程中用到的测试夹具"""
 
@@ -18,51 +31,180 @@ def playwright() -> Playwright:
         yield p
 
 
-# page fixture，用于每条测试用例单独打开浏览器
-@pytest.fixture(scope="function")
-def page(playwright):
-    browser = playwright.chromium.launch(headless=False)  # 启动浏览器
-    context = browser.new_context()  # 创建新的浏览器上下文
-    page = context.new_page()  # 打开新页面
-    yield page
-    page.close()  # 关闭页面
-    browser.close()  # 关闭浏览器
+# # 测试夹具-获取浏览器当前打开页面
+# @pytest.fixture(scope="session")
+# def browser(playwright):
+#     # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")
+#     # 通过ip和端口连接到已经打开的chromium浏览器
+#     browser = playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
+#     yield browser
 
-
-# 登录的前置操作
-# @pytest.fixture(scope="function")
-# def logged_in_page(page: Page):
-#     login_page = LoginPage(page)
-#     login_page.goto()
-#     login_page.fill_email("121292679@qq.com")
-#     login_page.fill_password("a546245426")
-#     login_page.click_login()
-#     page.wait_for_timeout(2000)
-#     yield page
-# 测试夹具-获取浏览器当前打开页面，并返回 MeetingRoomManagePageBase 对象
+# 测试夹具-获取浏览器当前打开页面
 @pytest.fixture(scope="session")
 def browser(playwright):
     # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")
     # 通过ip和端口连接到已经打开的chromium浏览器
-    browser = playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
+    # browser = playwright.chromium.launch(headless=False,args=['--start-maximized'])  # 启动浏览器
+    browser = playwright.chromium.launch(
+        headless=False,
+        args=["--window-size=1920,1080"]  # 设置窗口大小
+    )
     yield browser
+    browser.close()  # 关闭浏览器
 
 
-# 测试夹具-获取浏览器当前打开页面，并返回 MeetingRoomManagePageBase 对象
-# @pytest.fixture(scope="function")
-# def 浏览器已打开的页面(playwright):
-#     # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")
-#     # 通过ip和端口连接到已经打开的chromium浏览器
-#     browser = playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
-#     # 若浏览器已打开，则直接使用已打开的浏览器，否则创建一个新的浏览器实例
-#     context = browser.contexts[0] if browser.contexts else browser.new_context()
-#     # 若该浏览器中有页面，则直接使用已打开的页面，否则创建一个新的页面
-#     page = context.pages[0] if context.pages else context.new_page()
-#     page.set_default_timeout(6000)  # 设置默认超时时间为 4000 毫秒
-#     # # 创建小区信息页面对象
-#     # page = PageFloor(page)
-#     # 返回会议室管理页面对象
-#     yield page
+# 测试夹具-启动新的浏览器
+# 测试夹具 - 使用 browser fixture 创建 context 并应用 iPhone 13 设备配置
+@pytest.fixture(scope="session")
+def page_h5(playwright, browser):
+    # 获取 iPhone 13 设备参数
+    iphone_13 = playwright.devices['iPhone 13']
+    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
+    context = browser.new_context(**iphone_13)
+    page = context.new_page()  # 打开新页面
+    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
+    yield page
+    page.close()  # 关闭页面
+    context.close()  # 关闭上下文
+
+
+@pytest.fixture(scope="session")
+def page_pc(browser):
+    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
+    # context = browser.new_context(no_viewport=True)
+    context = browser.new_context()
+    page = context.new_page()  # 打开新页面
+    yield page
+    page.close()  # 关闭页面
+    context.close()  # 关闭上下文
+
+
+# 登录的前置操作
+# @pytest.fixture(scope="session")
+# def logged_in_page_pc(page_pc: Page):
+#     login_page = LoginPagePc(page_pc)
+#     login_page.goto()
+#     login_page.fill_account("wgy017916")
+#     login_page.fill_password("dxnb66@2024_")
+#     login_page.fill_captcha("202208")
+#     login_page.check()
+#     login_page.click_login()
+#     page_pc.wait_for_timeout(2000)
+#     yield page_pc
+
+
+# @pytest.fixture(scope="session")
+# def logged_in_page_h5(page_h5: Page):
+#     login_page = LoginPageH5(page_h5)
+#     login_page.goto()
+#     login_page.fill_account("wgy017916")
+#     login_page.fill_password("dxnb66@2024_")
+#     login_page.fill_captcha("202208")
+#     login_page.check()
+#     login_page.click_login()
+#     page_h5.wait_for_timeout(2000)
+#     yield page_h5
+
+@pytest.fixture(scope="session")
+def page_h5_居民(page_h5: Page):
+    login_page = LoginPageH5(page_h5)
+    login_page.goto()
+    login_page.同意登录()
+    login_page.登录(USERS_BY_ROLE['居民']['phone_number'], '22', '202208')
+    # page_h5.wait_for_timeout(2000)
+    # 登录后跳转到首页
+    home_page = PageHome(page_h5)
+    home_page.跳转到个人中心()
+    # 跳转到个人中心，并选择角色
+    page_personal_center = PagePersonalCenter(page_h5)
+    page_personal_center.选择角色("居民")
+    role_to_page['居民'] = page_h5
+    yield page_h5
+
+
+@pytest.fixture(scope="session")
+def page_pc_物业管理员1(browser):
+    context = browser.new_context()
+    page = context.new_page()  # 打开新页面
+    login_page = LoginPagePc(page)
+    login_page.goto()
+    login_page.登录(USERS_BY_ROLE['物业管理员1']['username'], USERS_BY_ROLE['物业管理员1']['password'], '202208')
+    login_page.进入系统()
+    # 登录后跳转到事业管理页面
+    query_page = BaseQueryPage(page)
+    query_page.跳转到某菜单("物业服务", "事件管理")
+    role_to_page['物业管理员1'] = page
+    yield page
+
+@pytest.fixture(scope="session")
+def page_pc_物业管理员2(browser):
+    context = browser.new_context()
+    page = context.new_page()  # 打开新页面
+    login_page = LoginPagePc(page)
+    login_page.goto()
+    login_page.登录(USERS_BY_ROLE['物业管理员2']['username'], USERS_BY_ROLE['物业管理员2']['password'], '202208')
+    login_page.进入系统()
+    # 登录后跳转到事业管理页面
+    query_page = BaseQueryPage(page)
+    query_page.跳转到某菜单("物业服务", "事件管理")
+    role_to_page['物业管理员2'] = page
+    yield page
+
+@pytest.fixture(scope="session")
+def page_pc_物业工作人员(browser):
+    context = browser.new_context()
+    page = context.new_page()  # 打开新页面
+    login_page = LoginPagePc(page)
+    login_page.goto()
+    login_page.登录(USERS_BY_ROLE['物业工作人员']['username'], USERS_BY_ROLE['物业工作人员']['password'], '202208')
+    login_page.进入系统()
+    # 登录后跳转到事业管理页面
+    query_page = BaseQueryPage(page)
+    query_page.跳转到某菜单("物业服务", "事件管理")
+    role_to_page['物业工作人员'] = page
+    yield page
+
+@pytest.fixture(scope="session")
+def page_pc_三级网格员(browser):
+    context = browser.new_context()
+    page = context.new_page()  # 打开新页面
+    login_page = LoginPagePc(page)
+    login_page.goto()
+    login_page.登录(USERS_BY_ROLE['三级网格员']['username'], USERS_BY_ROLE['三级网格员']['password'], '202208')
+    login_page.进入系统()
+    # 登录后跳转到事业管理页面
+    query_page = BaseQueryPage(page)
+    query_page.跳转到某菜单("网格管理", "事件管理")
+    role_to_page['三级网格员'] = page
+    yield page
+
+@pytest.fixture(scope="session")
+def page_pc_二级网格员(browser):
+    context = browser.new_context()
+    page = context.new_page()  # 打开新页面
+    login_page = LoginPagePc(page)
+    login_page.goto()
+    login_page.登录(USERS_BY_ROLE['二级网格员']['username'], USERS_BY_ROLE['二级网格员']['password'], '202208')
+    login_page.进入系统()
+    # 登录后跳转到事业管理页面
+    query_page = BaseQueryPage(page)
+    query_page.跳转到某菜单("网格管理", "事件管理")
+    role_to_page['二级网格员'] = page
+    yield page
+
+@pytest.fixture(scope="session")
+def page_pc_一级网格员(browser):
+    context = browser.new_context()
+    page = context.new_page()  # 打开新页面
+    login_page = LoginPagePc(page)
+    login_page.goto()
+    login_page.登录(USERS_BY_ROLE['一级网格员']['username'], USERS_BY_ROLE['一级网格员']['password'], '202208')
+    login_page.进入系统()
+    # 登录后跳转到事业管理页面
+    query_page = BaseQueryPage(page)
+    query_page.跳转到某菜单("网格管理", "事件管理")
+    role_to_page['一级网格员'] = page
+    yield page
 
 # 监听页面的请求
 # def requests(request):
@@ -85,6 +227,7 @@ def slow_response(route, request):
     # body = response.json()
     # 自定义返回数据，例如裁剪大文件等
     # route.fulfill(response=response, json=body)
+
 
 @pytest.fixture(scope="module")
 def 浏览器已打开的页面(browser):
@@ -201,4 +344,3 @@ def 后置操作_重置查询条件(查询页面):
     expect(查询页面.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=5000)
     # 等待网络请求完成
     # 查询页面.page.wait_for_load_state("networkidle")
-

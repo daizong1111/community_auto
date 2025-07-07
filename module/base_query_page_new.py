@@ -79,11 +79,21 @@ class BaseQueryPage(PageObject):
         # 定位表格中的所有行
         return self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").first.locator("xpath=//tbody/tr")
 
+        # return self.page.locator("//table[@class='el-table__body']//tbody").locator("visible=true").first.locator("tr")
+
     def 获取表格中指定行的所有字段值(self, index) -> list:
         """ index 为行号，从1开始 """
         return self.get_table_rows().nth(index-1).locator("td").all_text_contents()[:-1]
 
     def get_column_values_by_name(self, column_name: str) -> list:
+        # 把表格里面所有数据提取出来
+        table_body = self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").first
+
+        # 根据查的字段去找一下是表格里面的第几列
+        # ;locator('//table//tr')/all_inner_texts()  ===>  [‘aaaa,aaa,322,,22’，‘111，222，33，444，55’]
+        # 根据idx遍历每一行，从每一行中拿到想要的列的数据
+
+
         # self.等待表格加载完成()
         # 等待表格加载完成并不能真正等到它加载完成，要更换
         self.page.wait_for_timeout(1000)
