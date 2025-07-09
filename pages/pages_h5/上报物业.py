@@ -14,11 +14,11 @@ class PageReportProperty():
     def 选择上报类型(self, 上报类型: str):
         self.page.locator(f"//uni-view[text()='{上报类型}']").click()
 
-    def 上报事件(self, 上报类型:str, 上报描述: str, 上报图片路径:str):
+    def 上报事件(self, 表单数据:dict):
         self.按钮_新增.click()
-        self.选择上报类型(上报类型)
-        self.输入框_上报描述.fill(上报描述)
-        # self.按钮_上报图片.set_input_files(上报图片路径)
+        self.选择上报类型(表单数据["上报类型"])
+        self.输入框_上报描述.fill(表单数据["上报描述"])
+        # self.按钮_上报图片.set_input_files(表单数据["上报图片路径"])
         # 等待文件选择器出现并设置文件
         # self.page.wait_forFileChooser()
         # file_chooser = page.file_chooser()

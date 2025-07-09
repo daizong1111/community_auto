@@ -46,6 +46,7 @@ def browser(playwright):
     # 通过ip和端口连接到已经打开的chromium浏览器
     # browser = playwright.chromium.launch(headless=False,args=['--start-maximized'])  # 启动浏览器
     browser = playwright.chromium.launch(
+        # slow_mo=1000, # 全局设置速度
         headless=False,
         args=["--window-size=1920,1080"]  # 设置窗口大小
     )
@@ -106,20 +107,96 @@ def page_pc(browser):
 #     yield page_h5
 
 @pytest.fixture(scope="session")
-def page_h5_居民(page_h5: Page):
-    login_page = LoginPageH5(page_h5)
+def page_h5_居民(playwright, browser):
+    # 获取 iPhone 13 设备参数
+    iphone_13 = playwright.devices['iPhone 13']
+    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
+    context = browser.new_context(**iphone_13)
+    page = context.new_page()  # 打开新页面
+    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
+    login_page = LoginPageH5(page)
     login_page.goto()
     login_page.同意登录()
     login_page.登录(USERS_BY_ROLE['居民']['phone_number'], '22', '202208')
-    # page_h5.wait_for_timeout(2000)
     # 登录后跳转到首页
-    home_page = PageHome(page_h5)
+    home_page = PageHome(page)
     home_page.跳转到个人中心()
     # 跳转到个人中心，并选择角色
-    page_personal_center = PagePersonalCenter(page_h5)
+    page_personal_center = PagePersonalCenter(page)
     page_personal_center.选择角色("居民")
-    role_to_page['居民'] = page_h5
-    yield page_h5
+    role_to_page['居民'] = page
+    yield page
+    page.close()  # 关闭页面
+    context.close()  # 关闭上下文
+
+@pytest.fixture(scope="session")
+def page_h5_物业管理员(playwright, browser):
+    # 获取 iPhone 13 设备参数
+    iphone_13 = playwright.devices['iPhone 13']
+    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
+    context = browser.new_context(**iphone_13)
+    page = context.new_page()  # 打开新页面
+    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
+    login_page = LoginPageH5(page)
+    login_page.goto()
+    login_page.同意登录()
+    login_page.登录(USERS_BY_ROLE['物业管理员_H5']['phone_number'], '22', '202208')
+    # 登录后跳转到首页
+    # home_page = PageHome(page)
+    # home_page.跳转到个人中心()
+    # # 跳转到个人中心，并选择角色
+    # page_personal_center = PagePersonalCenter(page)
+    # page_personal_center.选择角色("物业管理员")
+    role_to_page['物业管理员_H5'] = page
+    yield page
+    page.close()  # 关闭页面
+    context.close()  # 关闭上下文
+
+@pytest.fixture(scope="session")
+def page_h5_三级网格员(playwright, browser):
+    # 获取 iPhone 13 设备参数
+    iphone_13 = playwright.devices['iPhone 13']
+    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
+    context = browser.new_context(**iphone_13)
+    page = context.new_page()  # 打开新页面
+    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
+    login_page = LoginPageH5(page)
+    login_page.goto()
+    login_page.同意登录()
+    login_page.登录(USERS_BY_ROLE['三级网格员_H5']['phone_number'], '22', '202208')
+    # 登录后跳转到首页
+    home_page = PageHome(page)
+    home_page.跳转到个人中心()
+    # 跳转到个人中心，并选择角色
+    page_personal_center = PagePersonalCenter(page)
+    page_personal_center.选择角色("三级网格员")
+    role_to_page['三级网格员_H5'] = page
+    yield page
+    page.close()  # 关闭页面
+    context.close()  # 关闭上下文
+
+@pytest.fixture(scope="session")
+def page_h5_二级网格员(playwright, browser):
+    # 获取 iPhone 13 设备参数
+    iphone_13 = playwright.devices['iPhone 13']
+    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
+    context = browser.new_context(**iphone_13)
+    page = context.new_page()  # 打开新页面
+    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
+    login_page = LoginPageH5(page)
+    login_page.goto()
+    login_page.同意登录()
+    login_page.登录(USERS_BY_ROLE['二级网格员_H5']['phone_number'], '22', '202208')
+    # 登录后跳转到首页
+    home_page = PageHome(page)
+    home_page.跳转到个人中心()
+    # 跳转到个人中心，并选择角色
+    page_personal_center = PagePersonalCenter(page)
+    page_personal_center.选择角色("二级网格员")
+    role_to_page['二级网格员_H5'] = page
+    yield page
+    page.close()  # 关闭页面
+    context.close()  # 关闭上下文
 
 
 @pytest.fixture(scope="session")
