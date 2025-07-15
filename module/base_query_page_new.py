@@ -422,8 +422,8 @@ class BaseQueryPage(PageObject):
     # def 点击抽屉中的按钮(self, 按钮名称):
     #     self.获取抽屉().locator("button", has_text=按钮名称).click()
     def 关闭抽屉(self):
-        self.click_button("取消",按钮的父元素=self.获取抽屉())
-        # self.点击抽屉中的按钮("取 消")
+        # self.click_button("取消",按钮的父元素=self.获取抽屉())
+        self.page.mouse.click(x=10,y=10)
         self.点击提示弹窗中的确定按钮()
         expect(self.获取抽屉()).not_to_be_visible()
 

@@ -216,7 +216,68 @@ class PageObject:
         # if dropdown.is_visible():
         #     表单元素.click()
 
-    def 表单_日期时间选择器(self, 表单项名称: str=None, 定位器:Locator=None, 日期: str=None, 表单最上层定位: Locator = None, timeout: float = None):
+    def 表单_树形控件(self, 表单项名称: str = None, 树容器: Locator = None, 路径: str = None,
+                      表单最上层定位: Locator = None, timeout: float = 3000):
+        """
+        在 Element Plus 的 el-tree 控件中选择指定路径的节点。
+
+        :param 树容器: 定位到 el-tree 的 Locator
+        :param 路径: 节点路径，如 "全选/车*__庐阳区中电数智街道中电数智社区小区*栋*"
+        :param timeout: 操作超时时间
+        """
+        self.page.wait_for_timeout(2000)
+        if 路径 is None:
+            return
+        if 树容器:
+            pass
+        elif 表单最上层定位:
+            树容器 = 表单最上层定位.locator(self.locators.表单项中包含操作元素的最上级div(表单项名称)).locator(
+                ".el-tree")
+        else:
+            树容器 = self.locators.表单项中包含操作元素的最上级div(表单项名称).locator("visible=true").locator(
+                ".el-tree")
+
+        分段路径 = 路径.split('/')
+        current_level_nodes = 树容器.locator(">.el-tree-node").all()
+
+        for index, 节点文本 in enumerate(分段路径):
+            matched_node = None
+            cnt = 0
+            while True:
+                # 遍历当前层级的所有节点
+                for node in current_level_nodes:
+                    node_content = node.locator(".el-tree-node__content")
+                    node_label = node_content.locator("span.over").first.inner_text(timeout=timeout)
+                    if node_label.strip() == 节点文本.strip():
+                        matched_node = node
+                        break
+                if matched_node is not None:
+                    break
+                elif cnt < 10:
+                    self.page.wait_for_timeout(500)
+                    cnt += 1
+                else:
+                    raise Exception(f"未找到匹配的节点：{节点文本}")
+            # assert matched_node is not None, f"未找到匹配的节点：{节点文本}"
+
+            # 展开节点（如果还有下一层）
+            if index < len(分段路径) - 1:
+                expand_icon = matched_node.locator(">.el-tree-node__content>.el-tree-node__expand-icon").locator(
+                    "visible=true")
+                if "expanded" not in expand_icon.get_attribute("class"):
+                    expand_icon.click(timeout=timeout)
+
+            if index == len(分段路径) - 1:
+                # 点击复选框选中该节点
+                checkbox = matched_node.locator(".el-checkbox__inner")
+                if checkbox.count() > 0:
+                    checkbox.click(timeout=timeout)
+
+            # 更新下一级节点列表
+            current_level_nodes = matched_node.locator(">.el-tree-node__children>.el-tree-node").all()
+
+    def 表单_日期时间选择器(self, 表单项名称: str = None, 定位器: Locator = None, 日期: str = None,
+                            表单最上层定位: Locator = None, timeout: float = None):
         """
         填写基于 Element Plus 的 el-date-picker 控件的日期表单项（通过点击选择）。
 
@@ -294,8 +355,8 @@ class PageObject:
 
         # 选择月份
         # picker_panel.locator(".el-month-table td div a", has_text=f"{数字月份转中文(month)}月").click(timeout=timeout)
-        picker_panel.locator(".el-month-table td div a").get_by_text(f"{数字月份转中文(month)}月",exact=True).click(timeout=timeout)
-
+        picker_panel.locator(".el-month-table td div a").get_by_text(f"{数字月份转中文(month)}月", exact=True).click(
+            timeout=timeout)
 
         # 选择具体日期
         picker_panel.locator(".el-date-table .available span", has_text=str(day)).first.click(timeout=timeout)
@@ -437,7 +498,8 @@ class PageObject:
         if need_click is True:
             time_panel.get_by_text("确定").click(force=True, timeout=timeout)
 
-    def 表单_日期时间范围选择器_左右面板联动(self, 定位器:Locator=None, 表单项名称: str=None, 日期: str=None, 表单最上层定位: Locator = None,
+    def 表单_日期时间范围选择器_左右面板联动(self, 定位器: Locator = None, 表单项名称: str = None, 日期: str = None,
+                                             表单最上层定位: Locator = None,
                                              timeout: float = None):
         """
         填写基于 Element Plus 的 el-date-picker 控件的日期表单项（通过点击选择）。
@@ -681,7 +743,8 @@ class PageObject:
         time_panel.get_by_text("确定").click(timeout=timeout)
         expect(time_panel).to_be_hidden(timeout=timeout)
 
-    def 表单_文件上传(self, 定位器:Locator=None, 表单项名称: str=None, 文件路径: str=None, 表单最上层定位: Locator = None, timeout: float = None):
+    def 表单_文件上传(self, 定位器: Locator = None, 表单项名称: str = None, 文件路径: str = None,
+                      表单最上层定位: Locator = None, timeout: float = None):
         """
         在指定表单项中上传文件。
 
@@ -804,6 +867,9 @@ class PageObject:
     def 快捷操作_填写表单_增加根据数据类确定唯一表单版(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
         # 该函数要添加等待，等待所有的表单加载完成
         self.page.wait_for_timeout(1000)
+        # 等待加载中状态消失
+        expect(self.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=10000)
+
         # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
         页面上已有的表单项列表 = []
         已经有唯一表单项 = False
@@ -830,6 +896,7 @@ class PageObject:
                     break
 
             if not flag:
+                print(form_list.last.text_content())
                 raise Exception(f"未找到包含所有指定表单项的表单，缺失字段: {', '.join(missing_items)}")
 
             # for index, 表单项 in enumerate(kwargs.keys()):
@@ -895,6 +962,8 @@ class PageObject:
             elif 表单项中包含操作元素的最上级div.locator(".el-cascader").count():
                 self.表单_级联选择器选择(表单项名称=表单项, 路径=内容, 表单最上层定位=处理后的表单最上层定位,
                                          timeout=timeout)
+            elif 表单项中包含操作元素的最上级div.locator(".el-tree").count():
+                self.表单_树形控件(表单项名称=表单项, 路径=内容, 表单最上层定位=处理后的表单最上层定位, timeout=timeout)
             # elif 表单项中包含操作元素的最上级div.locator(".ant-radio-group").count():
             #     self.表单_radio选择(表单项名称=表单项, 需要选择的项=内容, 表单最上层定位=处理后的表单最上层定位,
             #                         timeout=timeout)
@@ -908,7 +977,8 @@ class PageObject:
                 self.表单_时间选择器(表单项名称=表单项, 时间=内容, 表单最上层定位=处理后的表单最上层定位,
                                      timeout=timeout)
 
-            elif 表单项中包含操作元素的最上级div.locator(".el-date-editor--daterange,.el-date-editor--datetimerange").count():
+            elif 表单项中包含操作元素的最上级div.locator(
+                    ".el-date-editor--daterange,.el-date-editor--datetimerange").count():
                 self.表单_日期时间范围选择器_左右面板联动(表单项名称=表单项, 日期=内容,
                                                           表单最上层定位=处理后的表单最上层定位,
                                                           timeout=timeout)
@@ -921,6 +991,8 @@ class PageObject:
     def 校验表单中数据成功修改(self, 表单最上层定位: Locator = None, timeout=None, **kwargs):
         # 强制等待，避免内容未更新
         self.page.wait_for_timeout(3000)
+        # 等待加载中状态消失
+        expect(self.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=10000)
         # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
         页面上已有的表单项列表 = []
         已经有唯一表单项 = False
@@ -987,8 +1059,8 @@ class PageObject:
             #     continue
             if 内容 is None:
                 continue
-            表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项,处理后的表单最上层定位)
-
+            表单项中包含操作元素的最上级div = self.locators.表单项中包含操作元素的最上级div(表单项,
+                                                                                            处理后的表单最上层定位)
 
             assert 表单项中包含操作元素的最上级div.count() > 0, f"表单项: {表单项} 的最上级div未找到"
             内容_表单项 = 表单项中包含操作元素的最上级div.locator('input,textarea').input_value()
@@ -1019,6 +1091,15 @@ class PageObject:
             assert 内容_表单项_标准化 in 预期内容_标准化, \
                 f"定位器{定位器}填写内容不一致，实际内容：{内容_表单项}，预期内容：{内容}"
 
+    # 这段代码不要直接调用，让子类重写
+    def 校验表单中项目时间成功修改(self, 开始日期: str, 结束日期: str):
+        项目开始时间_表单项内容 = self.locators.表单项中包含操作元素的最上级div("项目时间").locator(
+            "xpath=//input[@placeholder='开始日期']").input_value()
+        项目结束时间_表单项内容 = self.locators.表单项中包含操作元素的最上级div("项目时间").locator(
+            "xpath=//input[@placeholder='结束日期']").input_value()
+        # print(项目开始时间_表单项内容, 项目结束时间_表单项内容)
+        assert 项目开始时间_表单项内容 == 开始日期 and 项目结束时间_表单项内容 == 结束日期, f"项目时间修改失败,项目开始时间_表单项内容:{项目开始时间_表单项内容},项目结束时间_表单项内容:{项目结束时间_表单项内容}"
+
     def 获取提示弹窗(self):
         return self.page.locator(".el-message-box")
 
@@ -1028,10 +1109,10 @@ class PageObject:
     def 点击提示弹窗中的确定按钮(self):
         self.获取提示弹窗中的确定按钮().click()
 
-    def 跳转到某菜单(self, 顶部菜单名称:str=None, 左侧菜单路径: str= None):
+    def 跳转到某菜单(self, 顶部菜单名称: str = None, 左侧菜单路径: str = None):
         """"左侧菜单路径如 小区信息/房屋管理 """
         if 顶部菜单名称 is not None:
-            顶部菜单按钮 = self.page.locator('.meunBtn').get_by_text(顶部菜单名称,exact=True)
+            顶部菜单按钮 = self.page.locator('.meunBtn').get_by_text(顶部菜单名称, exact=True)
             顶部菜单按钮.click()
         for 菜单名称 in 左侧菜单路径.split("/"):
             self.page.get_by_role("menuitem").get_by_text(菜单名称).click()
@@ -1039,6 +1120,33 @@ class PageObject:
         # 等待页面加载完成
         # self.page.wait_for_load_state('load')
         self.page.wait_for_timeout(1000)
+
+    def 获取详情页中的数据(self, loc_表单项最上层:Locator=None) -> dict:
+        """只能提取有label的input中的数据"""
+        res = {}
+        if loc_表单项最上层 is not None:
+            # 遍历所有的input元素
+            for loc_input in loc_表单项最上层.locator("input").all():
+                # 判断它是否有label，若没有label，则跳过
+                loc_label = loc_input.locator("xpath=//ancestor::div[@class='el-form-item__content']//preceding-sibling::label[position()=1]")
+                if loc_label.count() == 0:
+                    continue
+                key = loc_input.locator("xpath=//ancestor::div[@class='el-form-item__content']//preceding-sibling::label[position()=1]").inner_text()
+                # 有bug，可能存在多个input元素对应同一个label的情况，这样的话，会导致value被覆盖。
+                # 日期范围中有两个input元素，它们对应同一个label，会导致值被覆盖
+                value = loc_input.input_value()
+                res[key] = value
+
+        else:
+            for loc_input in self.page.locator("input").all():
+                key = loc_input.locator("xpath=//ancestor::div[@class='el-form-item__content']//preceding-sibling::label[position()=1]").inner_text()
+                value = loc_input.input_value()
+                res[key] = value
+
+        return res
+
+
+
 
 
 if __name__ == '__main__':
@@ -1052,6 +1160,10 @@ if __name__ == '__main__':
         page = context.pages[0] if context.pages else context.new_page()
         page.set_default_timeout(3000)  # 设置默认超时时间为 3000 毫秒
         page = PageObject(page)
+
+        page.获取详情页中的数据(page.page.locator(".el-drawer"))
+
+        # page.表单_树形控件(树容器=page.page.locator(".el-tree").nth(1), 路径="全选/付**__三级网格员")
 
         # page.表单_文本框填写("心愿内容","")
 
@@ -1074,9 +1186,7 @@ if __name__ == '__main__':
         # page.快捷操作_填写表单({"发布面向对象":"合肥市/庐阳区/中电数智街道/中电数智小区/金城小区", "标题关键词":"啦啦啦"})
         # page.快捷操作_填写表单_增加根据数据类确定唯一表单版(执照日期="2023-07-05,2023-07-14")
         # page.快捷操作_填写表单_增加根据数据类确定唯一表单版(营业时间="08:20:00,10:30:00")
-        # page.快捷操作_填写表单_增加根据数据类确定唯一表单版(入驻时间="2023-12-05")
-
-
+        page.快捷操作_填写表单_增加根据数据类确定唯一表单版(任务负责人="全选/付**__三级网格员")
 
         # page.快捷操作_填写表单_增加根据数据类确定唯一表单版(小区名称="党务", 行政区域="未上架")
         # page.表单_时间选择器(表单项名称="营业时间", 时间="08:20:00")

@@ -12,6 +12,7 @@ import time
 
 from pages.login_page_h5 import LoginPageH5
 from pages.login_page_pc import LoginPagePc
+from module.base_query_page_new import BaseQueryPage
 from pages.pages_h5.首页 import PageHome
 from pages.pages_h5.个人中心 import PagePersonalCenter
 
@@ -31,27 +32,27 @@ def playwright() -> Playwright:
         yield p
 
 
-# # 测试夹具-获取浏览器当前打开页面
-# @pytest.fixture(scope="session")
-# def browser(playwright):
-#     # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")
-#     # 通过ip和端口连接到已经打开的chromium浏览器
-#     browser = playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
-#     yield browser
-
 # 测试夹具-获取浏览器当前打开页面
 @pytest.fixture(scope="session")
 def browser(playwright):
     # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")
     # 通过ip和端口连接到已经打开的chromium浏览器
-    # browser = playwright.chromium.launch(headless=False,args=['--start-maximized'])  # 启动浏览器
-    browser = playwright.chromium.launch(
-        # slow_mo=1000, # 全局设置速度
-        headless=False,
-        args=["--window-size=1920,1080"]  # 设置窗口大小
-    )
+    browser = playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
     yield browser
-    browser.close()  # 关闭浏览器
+
+# 测试夹具-获取浏览器当前打开页面
+# @pytest.fixture(scope="session")
+# def browser(playwright):
+#     # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")
+#     # 通过ip和端口连接到已经打开的chromium浏览器
+#     # browser = playwright.chromium.launch(headless=False,args=['--start-maximized'])  # 启动浏览器
+#     browser = playwright.chromium.launch(
+#         # slow_mo=1000, # 全局设置速度
+#         headless=False,
+#         args=["--window-size=1920,1080"]  # 设置窗口大小
+#     )
+#     yield browser
+#     browser.close()  # 关闭浏览器
 
 
 # 测试夹具-启动新的浏览器
@@ -119,11 +120,11 @@ def page_h5_居民(playwright, browser):
     login_page.同意登录()
     login_page.登录(USERS_BY_ROLE['居民']['phone_number'], '22', '202208')
     # 登录后跳转到首页
-    home_page = PageHome(page)
-    home_page.跳转到个人中心()
-    # 跳转到个人中心，并选择角色
-    page_personal_center = PagePersonalCenter(page)
-    page_personal_center.选择角色("居民")
+    # home_page = PageHome(page)
+    # home_page.跳转到个人中心()
+    # # 跳转到个人中心，并选择角色
+    # page_personal_center = PagePersonalCenter(page)
+    # page_personal_center.选择角色("居民")
     role_to_page['居民'] = page
     yield page
     page.close()  # 关闭页面
@@ -165,11 +166,11 @@ def page_h5_三级网格员(playwright, browser):
     login_page.同意登录()
     login_page.登录(USERS_BY_ROLE['三级网格员_H5']['phone_number'], '22', '202208')
     # 登录后跳转到首页
-    home_page = PageHome(page)
-    home_page.跳转到个人中心()
-    # 跳转到个人中心，并选择角色
-    page_personal_center = PagePersonalCenter(page)
-    page_personal_center.选择角色("三级网格员")
+    # home_page = PageHome(page)
+    # home_page.跳转到个人中心()
+    # # 跳转到个人中心，并选择角色
+    # page_personal_center = PagePersonalCenter(page)
+    # page_personal_center.选择角色("三级网格员")
     role_to_page['三级网格员_H5'] = page
     yield page
     page.close()  # 关闭页面
@@ -188,11 +189,11 @@ def page_h5_二级网格员(playwright, browser):
     login_page.同意登录()
     login_page.登录(USERS_BY_ROLE['二级网格员_H5']['phone_number'], '22', '202208')
     # 登录后跳转到首页
-    home_page = PageHome(page)
-    home_page.跳转到个人中心()
-    # 跳转到个人中心，并选择角色
-    page_personal_center = PagePersonalCenter(page)
-    page_personal_center.选择角色("二级网格员")
+    # home_page = PageHome(page)
+    # home_page.跳转到个人中心()
+    # # 跳转到个人中心，并选择角色
+    # page_personal_center = PagePersonalCenter(page)
+    # page_personal_center.选择角色("二级网格员")
     role_to_page['二级网格员_H5'] = page
     yield page
     page.close()  # 关闭页面
@@ -411,6 +412,10 @@ def 后置操作_刷新页面(浏览器已打开的页面):
     # 等待网络请求完成
     expect(浏览器已打开的页面.get_by_text("系统加载中")).not_to_be_visible(timeout=5000)
 
+@pytest.fixture(scope="function")
+def 后置操作_点击返回按钮(浏览器已打开的页面):
+    yield 浏览器已打开的页面
+    浏览器已打开的页面.locator("button").filter(has_text="返回").click()
 
 @pytest.fixture(scope="function")
 def 后置操作_重置查询条件(查询页面):
@@ -421,3 +426,13 @@ def 后置操作_重置查询条件(查询页面):
     expect(查询页面.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=5000)
     # 等待网络请求完成
     # 查询页面.page.wait_for_load_state("networkidle")
+
+@pytest.fixture(scope="function")
+def 后置操作_关闭抽屉(浏览器已打开的页面):
+    yield 浏览器已打开的页面
+    当前页面 = BaseQueryPage(浏览器已打开的页面)
+    # 点击某空白位置坐标
+    当前页面.page.mouse.click(x=10,y=10)
+    当前页面.点击提示弹窗中的确定按钮()
+    expect(当前页面.获取抽屉()).not_to_be_visible()
+
