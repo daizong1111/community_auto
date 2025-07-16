@@ -26,6 +26,8 @@ class PageStoreInfo(BaseQueryPage):
         self.输入框_商铺等级 = self.page.locator(
             "//form[contains(@class,'query-form')]//input[@placeholder='请选择商铺等级']//ancestor::div[@class='el-form-item__content']").locator(
             "visible=true")
+
+        self.选项卡_单位信息 = self.page.locator("//div[text()='单位信息']")
     def 获取新增表单最上层定位(self):
         return self.page.locator('//div[@aria-label="新增"]').locator("visible=true")
 

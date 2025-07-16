@@ -37,7 +37,7 @@ def run_tests():
                    # 'tests/test_网格管理/test_网格区域管理/test_网格区域划分.py::TestEdit::test_edit_success',
                    # 'tests/test_网格管理/test_网格区域管理/test_网格区域划分.py::TestDelete::test_delete_success',
 
-                   'tests/test_网格管理/test_场所监管巡查/test_人工下发巡查.py',
+                   'tests/test_网格管理/test_场所监管巡查/test_人工下发巡查/test_商铺走访.py',
                    # 'tests/test_网格管理/test_网格员管理.py::TestEdit',
                    # 'tests/test_网格管理/test_网格员管理.py::TestDelete',
 

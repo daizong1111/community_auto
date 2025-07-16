@@ -31,9 +31,17 @@ class PageManualInspection(BaseQueryPage):
         self.输入框_商铺名称 = self.page.locator(
             "//form[contains(@class,'query-form')]//input[@placeholder='请输入商铺名称']//ancestor::div[@class='el-form-item__content']").locator(
             "visible=true")
+        self.输入框_单位名称 = self.page.locator(
+            "//form[contains(@class,'query-form')]//input[@placeholder='请输入单位名称']//ancestor::div[@class='el-form-item__content']").locator(
+            "visible=true")
         self.输入框_任务状态 = self.page.locator(
             "//form[contains(@class,'query-form')]//input[@placeholder='请选择任务状态']//ancestor::div[@class='el-form-item__content']").locator(
             "visible=true")
+        self.输入框_单位类型 = self.page.locator(
+            "//form[contains(@class,'query-form')]//input[@placeholder='请选择单位类型']//ancestor::div[@class='el-form-item__content']").locator(
+            "visible=true")
+
+        self.选项卡_单位走访 = self.page.locator("//div[text()='单位走访']")
 
     def 查询数据库中的数据量(self, db_connection):
         self.get_db_data(db_connection, "select count(*) from ")
@@ -48,7 +56,9 @@ class PageManualInspection(BaseQueryPage):
             self.输入框_商铺等级: kwargs.get("商铺等级"),
             self.输入框_日期: kwargs.get("日期"),
             self.输入框_商铺名称: kwargs.get("商铺名称"),
-            self.输入框_任务状态: kwargs.get("任务状态")
+            self.输入框_单位名称: kwargs.get("单位名称"),
+            self.输入框_任务状态: kwargs.get("任务状态"),
+            self.输入框_单位类型: kwargs.get("单位类型"),
 
         }
         self.快捷操作_填写表单_传入定位器(kwargs=定位器到输入值)
@@ -61,6 +71,10 @@ class PageManualInspection(BaseQueryPage):
             self.输入框_商铺类型: kwargs.get("商铺类型"),
             self.输入框_商铺等级: kwargs.get("商铺等级"),
             self.输入框_日期: kwargs.get("日期"),
+            self.输入框_商铺名称: kwargs.get("商铺名称"),
+            self.输入框_单位名称: kwargs.get("单位名称"),
+            self.输入框_任务状态: kwargs.get("任务状态"),
+            self.输入框_单位类型: kwargs.get("单位类型"),
 
         }
         self.校验表单中数据成功修改_传入定位器(kwargs=定位器到输入值)
@@ -92,6 +106,14 @@ class PageManualInspection(BaseQueryPage):
         res.clear()
         loc_被访商铺 = self.locators.表单项中包含操作元素的最上级div("被访商铺").locator(".item .el-tooltip")
         for loc in loc_被访商铺.all():
+            res.append(loc.text_content())
+        return res
+
+    def 获取被访单位列表(self, res)->list:
+        self.等待表格加载完成()
+        res.clear()
+        loc_被访单位 = self.locators.表单项中包含操作元素的最上级div("被访单位").locator(".item .el-tooltip")
+        for loc in loc_被访单位.all():
             res.append(loc.text_content())
         return res
 

@@ -1125,6 +1125,8 @@ class PageObject:
         """只能提取有label的input中的数据"""
         res = {}
         if loc_表单项最上层 is not None:
+            # 等待页面加载完成
+            expect(loc_表单项最上层).to_be_visible()
             # 遍历所有的input元素
             for loc_input in loc_表单项最上层.locator("input").all():
                 # 判断它是否有label，若没有label，则跳过

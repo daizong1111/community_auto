@@ -65,6 +65,7 @@ class PageUnitInfo(BaseQueryPage):
         输入框_删除原因.blur()
         expect(self.获取输入框_删除原因()).to_have_value(删除原因)
 
+
 if __name__ == '__main__':
     with sync_playwright() as playwright:
         # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")

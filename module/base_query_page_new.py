@@ -85,6 +85,21 @@ class BaseQueryPage(PageObject):
         """ index 为行号，从1开始 """
         return self.get_table_rows().nth(index-1).locator("td").all_text_contents()[:-1]
 
+    def 根据列名获取索引(self, column_name:str):
+        # 获取表头行的所有列名单元格
+        header_cells = self.page.locator(".el-table__header").locator("visible=true").first.locator("th").all()
+
+        # 查找目标列的索引
+        column_index = -1
+        for idx, cell in enumerate(header_cells):
+            # print(cell.inner_text())
+            if cell.inner_text().strip() == column_name:
+                column_index = idx
+                break
+        assert column_index != -1, f"未找到列名为 '{column_name}' 的列"
+
+        return column_index
+
     def get_column_values_by_name(self, column_name: str) -> list:
         # 把表格里面所有数据提取出来
         table_body = self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").first
@@ -107,7 +122,7 @@ class BaseQueryPage(PageObject):
         table_body = self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").first
 
         # 获取表头行的所有列名单元格
-        header_cells = self.page.locator(".el-table__header th").all()
+        header_cells = self.page.locator(".el-table__header").locator("visible=true").first.locator("th").all()
 
         # 查找目标列的索引
         column_index = -1
@@ -384,9 +399,43 @@ class BaseQueryPage(PageObject):
         else:
             raise Exception("请输入关键字或行号")
 
-    def 点击表格中某行按钮(self, 关键字=None, 行号=None, 按钮名:str=None):
-        self.获取表格中某行按钮(关键字=关键字,行号=行号, 按钮名=按钮名).evaluate("(el) => el.click()")
+    def 点击表格中某行按钮(self, loc_行:Locator=None,关键字=None, 行号=None, 按钮名:str=None):
+        if loc_行 is not None:
+            loc_行.locator("button", has_text=按钮名).evaluate("(el) => el.click()")
+        else:
+            self.获取表格中某行按钮(关键字=关键字,行号=行号, 按钮名=按钮名).evaluate("(el) => el.click()")
 
+    # def 点击表格中某行按钮(self, loc:Locator=None, 按钮名:str=None):
+    #     loc.locator("button",has_text=按钮名).evaluate("(el) => el.click()")
+
+    def loc_表格中每列内容完全等于筛选条件的行(self, 匹配条件:dict):
+        # res = self.get_table_rows()
+        #
+        # for key, value in 匹配条件.items():
+        #     idx = self.根据列名获取索引(key)
+        #     res = res.filter(has=self.get_table_rows().get_by_text(value,exact=True))
+        #     if res is None:
+        #         raise Exception(f"没有找到匹配的行，请检查筛选条件是否正确")
+        # return res
+
+        # 获取表格所有行
+        rows = self.get_table_rows()
+
+        for column_name, expected_value in 匹配条件.items():
+            # 获取当前列的索引
+            idx = self.根据列名获取索引(column_name)
+
+            # 筛选出该列值精确等于 expected_value 的行
+            # rows = rows.filter(
+            #     has=rows.locator(f"td:nth-child({idx + 1})").get_by_text(expected_value, exact=True)
+            # )
+
+            rows = rows.filter(has=self.page.get_by_text(expected_value,exact=True))
+            # 如果中间某一步没有匹配结果，提前结束
+            if not rows.count():
+                raise Exception(f"未找到满足条件的行：{column_name} = {expected_value}")
+
+        return rows
     # def 获取详情按钮(self, 关键字):
     #     return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
     #                                                                                     has_text=关键字).first.locator(
