@@ -105,11 +105,10 @@ class BaseQueryPage(PageObject):
         table_body = self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").first
 
         # 根据查的字段去找一下是表格里面的第几列
-        # ;locator('//table//tr')/all_inner_texts()  ===>  [‘aaaa,aaa,322,,22’，‘111，222，33，444，55’]
+        # ;locator('//table//tr')/all_inner_texts()  ===>  [‘aaaa,aaa,322,22’，‘111,222,33,444,55’]
         # 根据idx遍历每一行，从每一行中拿到想要的列的数据
-
-
         # self.等待表格加载完成()
+
         # 等待表格加载完成并不能真正等到它加载完成，要更换
         self.page.wait_for_timeout(1000)
         """
@@ -471,10 +470,15 @@ class BaseQueryPage(PageObject):
     # def 点击抽屉中的按钮(self, 按钮名称):
     #     self.获取抽屉().locator("button", has_text=按钮名称).click()
     def 关闭抽屉(self):
-        # self.click_button("取消",按钮的父元素=self.获取抽屉())
-        self.page.mouse.click(x=10,y=10)
-        self.点击提示弹窗中的确定按钮()
-        expect(self.获取抽屉()).not_to_be_visible()
+        if self.获取抽屉().is_visible():
+            # self.click_button("取消",按钮的父元素=self.获取抽屉())
+            # 注意：之前把坐标设置为（10，10），出现了点击后不出现弹窗的情况，bug很难排查，非常奇怪
+            self.page.mouse.click(x=100,y=100)
+            # self.获取提示弹窗中的确定按钮().highlight()
+            # print(self.获取提示弹窗中的确定按钮().count())
+            expect(self.获取提示弹窗中的确定按钮()).to_be_visible()
+            self.点击提示弹窗中的确定按钮()
+            expect(self.获取抽屉()).not_to_be_visible()
 
     def 获取查询接口响应的数据(self, 按钮名称: str, 接口路径: str):
         """

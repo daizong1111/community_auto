@@ -32,6 +32,7 @@ time_string = current_time.strftime("%Y-%m-%d,%H:%M:%S")
 def 删除申请审批页面(浏览器已打开的页面):
     # 将页面封装为删除申请审批页面
     page = PageDeleteApproval(浏览器已打开的页面)
+    page.跳转到某菜单('基础信息','场所管理/删除申请审批')
     yield page
 
 
@@ -137,7 +138,9 @@ class TestDetail(BaseCase):
     @pytest.mark.parametrize(
         "行号",
         [
-            (1),(2),(3),(4),(5),(6),(7),(8),
+            (1),
+            (2),
+            (3),(4),(5),(6),(7),(8),
             (9),
             (10)
         ],

@@ -27,3 +27,4 @@ class LoginPageH5:
         self.img_captcha_input.fill(img_captcha)
         self.sms_captcha_input.fill(sms_captcha)
         self.login_button.click()
+

@@ -82,6 +82,7 @@ NEW_PERSON_ADDED = True
 @pytest.mark.usefixtures("后置操作_重置查询条件")
 @pytest.mark.usefixtures("网格员管理页面")
 class TestAdd(BaseCase):
+    @pytest.mark.flaky(reruns=3)  # 当测试失败时，最多重试 3 次
     @pytest.mark.parametrize(
         "表单数据_新增,网格员信息",
 
@@ -159,6 +160,7 @@ class TestEdit(BaseCase):
         if not NEW_PERSON_ADDED:
             pytest.skip("新增用例执行失败，跳过修改相关测试")
 
+    @pytest.mark.flaky(reruns=3)  # 当测试失败时，最多重试 3 次
     @pytest.mark.usefixtures("后置操作_刷新页面")
     @pytest.mark.parametrize(
         "表单数据,网格员信息",

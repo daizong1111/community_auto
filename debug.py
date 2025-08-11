@@ -11,13 +11,14 @@ def meeting_room_manage_page():
         context = browser.contexts[0] if browser.contexts else browser.new_context()
         # 若该浏览器中有页面，则直接使用已打开的页面，否则创建一个新的页面
         page = context.pages[0] if context.pages else context.new_page()
-        page.set_default_timeout(10000)  # 设置默认超时时间为 3000 毫秒
+        page.set_default_timeout(3000)  # 设置默认超时时间为 3000 毫秒
 
-        page.get_by_text("会议室名称").highlight()
-        # page.get_by_role("textbox", name='* 会议室名称：').highlight()
-        # # 修改 get_by_role 的 name 参数以正确匹配包含特殊字符的标签
-        loc = page.get_by_role("textbox", name="会议室名称：")
-        loc.highlight()
+
+        # page.get_by_text("会议室名称").highlight()
+        # # page.get_by_role("textbox", name='* 会议室名称：').highlight()
+        # # # 修改 get_by_role 的 name 参数以正确匹配包含特殊字符的标签
+        # loc = page.get_by_role("textbox", name="会议室名称：")
+        # loc.highlight()
         # page.get_by_role("textbox", name= "/.*会议室名称： /" ).highlight()
         # page.get_by_placeholder("不超过10个字").highlight()
         page.wait_for_timeout(6000)

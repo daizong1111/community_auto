@@ -8,6 +8,15 @@ USERS_BY_ROLE = {
             "password": "",
         }
     ,
+
+    "一级网格员_H5":
+        {
+
+                "id": "01",
+                "phone_number": "17734223066",
+                "password": "",
+        }
+        ,
     "二级网格员_H5":
         {
             # 该账号为居民、物业管理员、物业工作人员、一级网格员
@@ -42,7 +51,9 @@ USERS_BY_ROLE = {
     "物业管理员2":
         {
             "id": "03",
-            "username": "wyglysdz1926",
+            # "username": "wyglysdz1926",
+            # "password": "dxnb66@2024_",
+            "username": "wgzzx3481",
             "password": "dxnb66@2024_",
         }
     ,
@@ -70,8 +81,11 @@ USERS_BY_ROLE = {
     "一级网格员":
         {
             "id": "06",
-            "username": "yiji1926",
+            # "username": "yiji1926",
+            # "password": "dxnb66@2024_",
+            "username": "yiji3066",
             "password": "dxnb66@2024_",
+
         }
     ,
 }

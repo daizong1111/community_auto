@@ -27,6 +27,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def 实有设备页面(浏览器已打开的页面):
     # 将页面封装为实有设备页面
     page = PageRealEquipment(浏览器已打开的页面)
+    page.跳转到某菜单("基础信息","实有设备")
     yield page
 
 @pytest.fixture(scope="function")

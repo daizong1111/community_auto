@@ -6,6 +6,7 @@ from pages.pages_h5.个人中心 import PagePersonalCenter
 class PageHome():
     def __init__(self, page: Page):
         self.page = page
+        self.url = "http:/114.96.83.242:8087/h5/"
         self.按钮_个人中心 = self.page.locator(
             "//span[text()='个人中心']")
         self.按钮_首页 = self.page.locator("//span[text()='首页']")
@@ -17,7 +18,8 @@ class PageHome():
         self.按钮_个人中心.click()
 
     def 跳转到首页(self):
-        self.按钮_首页.click()
+        # self.按钮_首页.click()
+        self.page.goto(self.url)
 
     def 跳转到上报物业(self):
         self.图标_上报物业.click()

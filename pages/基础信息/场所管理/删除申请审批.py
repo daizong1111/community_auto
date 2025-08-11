@@ -37,7 +37,7 @@ class PageDeleteApproval(BaseQueryPage):
             loc_type:要在span标签的相邻兄弟下寻找的元素的类型
         """
         if loc_type == "span":
-            return self.获取包含某文本内容的span标签(text_span).locator(f'xpath=./following-sibling::span').inner_text()
+            return self.获取包含某文本内容的span标签(text_span).locator(f'xpath=./following-sibling::span').inner_html()
         elif loc_type == "textarea":
             return self.获取包含某文本内容的span标签(text_span).locator(f'xpath=./following-sibling::span//{loc_type}').input_value()
         else:

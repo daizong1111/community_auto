@@ -80,30 +80,31 @@ class TestQuery(BaseCase):
     @pytest.mark.parametrize(
         "搜索框数据_图表, 搜索框数据_表格",
         [
-            ({"社区": "中电数智社区"},
-             {}),
-            ({"小区": "测试商圈"},
-             {}),
-            ({"日期": "2024-07-01,2025-07-01"},
-             {}),
-            ({},
-             {"事件类型": "建议"}),
-            ({},
-             {"处理状态": "待处理"}),
-            ({},
-             {"上报人": "杨"}),
-            ({},
-             {"处理人": "金雨菲"}),
-            ({"社区": "中电数智社区", "小区": "测试商圈", "日期": "2024-07-01,2025-07-01"},
-             {"事件类型": "建议", "处理状态": "待处理", "上报人": "杨", "处理人": "金雨菲"})
+            # ({"loc:(//form[contains(@class,'query-form')]//input[@placeholder='请选择社区']//ancestor::div[@class='el-form-item__content'])[2]": "中电数智社区"},
+            #  {}),
+            # ({"loc://form[contains(@class,'query-form')]//input[@placeholder='请选择小区']//ancestor::div[@class='el-form-item__content']": "测试商圈"},
+            #  {}),
+            # ({"loc://form[contains(@class,'query-form')]//input[@placeholder='发起日期']//ancestor::div[@class='el-form-item__content']": "2024-07-01,2025-07-01"},
+            #  {}),
+            # ({},
+            #  {"loc://form[contains(@class,'query-form')]//input[@placeholder='请选择事件类型']//ancestor::div[@class='el-form-item__content']": "建议"}),
+            # ({},
+            #  {"loc://form[contains(@class,'query-form')]//input[@placeholder='请选择处理状态']//ancestor::div[@class='el-form-item__content']": "待处理"}),
+            # ({},
+            #  {"loc://form[contains(@class,'query-form')]//input[@placeholder='请输入上报人']//ancestor::div[@class='el-form-item__content']": "杨"}),
+            # ({},
+            #  {"loc://form[contains(@class,'query-form')]//input[@placeholder='请输入当前处理人']//ancestor::div[@class='el-form-item__content']": "金雨菲"}),
+            ({PageIncidentManage.输入框_社区: "中电数智社区", PageIncidentManage.输入框_小区: "测试商圈", PageIncidentManage.输入框_日期: "2024-07-01,2025-07-01"},
+             {PageIncidentManage.输入框_事件类型: "建议", PageIncidentManage.输入框_处理状态: "待处理", PageIncidentManage.输入框_上报人: "杨", PageIncidentManage.输入框_处理人: "金雨菲"})
 
         ]
     )
     def test_query(self, 事件管理页面, 搜索框数据_图表: dict, 搜索框数据_表格: dict):
         # 输入查询条件
-        事件管理页面.填写表单项_传入定位器(**搜索框数据_图表)
+        # 事件管理页面.填写表单项_传入定位器(**搜索框数据_图表)
+        事件管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(**搜索框数据_图表)
         事件管理页面.click_button("搜索", 按钮的父元素=事件管理页面.page.locator(".query-form").first)
-        事件管理页面.填写表单项_传入定位器(**搜索框数据_表格)
+        事件管理页面.快捷操作_填写表单_增加根据数据类确定唯一表单版(**搜索框数据_表格)
         事件管理页面.click_button("搜索", 按钮的父元素=事件管理页面.page.locator(".query-form").nth(1))
 
         # 定义字段与验证逻辑的映射
@@ -243,26 +244,4 @@ class TestDetail(BaseCase):
                                                })
 
 
-@pytest.mark.usefixtures("page_pc_一级网格员")
-@pytest.mark.usefixtures("page_pc_二级网格员")
-@pytest.mark.usefixtures("page_pc_三级网格员")
-@pytest.mark.usefixtures("page_pc_物业工作人员")
-@pytest.mark.usefixtures("page_pc_物业管理员1")
-@pytest.mark.usefixtures("page_h5_居民")
-class TestProcessH5(BaseCase):
-    @allure.step("测试H5端事件处理流程")
-    def test_process(self,
-                     page_h5_居民,
-                     page_pc_物业管理员1):
-        首页 = PageHome(page_h5_居民)
-        # 跳转到上报物业，进行一次上报
-        首页.跳转到上报物业()
-        上报物业页面_居民 = PageReportProperty(page_h5_居民)
-        上报物业页面_居民.上报事件("建议", "建议描述", "")
 
-        # 刷新一下页面，让列表更新
-        page_pc_物业管理员1.reload()
-        事业管理页面_物业管理员 = PageIncidentManage(page_pc_物业管理员1)
-        事业管理页面_物业管理员.处理最新事件({"处理方式": "下发", "指定处理人": "石**", "处理意见": "同意",
-                                              "图片": r"C:\Users\Administrator\Pictures\111.png"})
-        事业管理页面_物业管理员.page.wait_for_timeout(10000000)

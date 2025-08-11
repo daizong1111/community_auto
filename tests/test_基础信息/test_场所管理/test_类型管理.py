@@ -32,6 +32,7 @@ time_string = current_time.strftime("%Y-%m-%d,%H:%M:%S")
 def 类型管理页面(浏览器已打开的页面):
     # 将页面封装为类型管理页面
     page = PageTypeManage(浏览器已打开的页面)
+    page.跳转到某菜单('基础信息','场所管理/类型管理')
     yield page
 
 @pytest.fixture(scope="class")

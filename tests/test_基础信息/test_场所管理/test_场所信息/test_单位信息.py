@@ -10,6 +10,7 @@ import allure
 # 生成随机身份证号码和手机号码，防止数据重复
 from faker import Faker
 
+import utils.highlight
 from pages.基础信息.场所管理.删除申请审批 import PageDeleteApproval
 
 fake = Faker('zh_CN')
@@ -47,6 +48,7 @@ NEW_PERSON_ADDED = True
 @pytest.mark.usefixtures("后置操作_重置查询条件")
 @pytest.mark.usefixtures("单位信息页面")
 class TestAdd(BaseCase):
+    @pytest.mark.usefixtures("后置操作_重置查询条件", "后置操作_关闭抽屉")
     @pytest.mark.parametrize(
         "表单数据",
 
@@ -106,6 +108,7 @@ class TestAdd(BaseCase):
         except Exception as e:
             raise e
 
+    @pytest.mark.usefixtures("后置操作_重置查询条件", "后置操作_关闭抽屉")
     @pytest.mark.parametrize(
         "表单数据",
 
@@ -139,7 +142,7 @@ class TestAdd(BaseCase):
         单位信息页面.点击提示弹窗中的确定按钮()
         self.log_step("提交表单")
         # 断言该人员已存在字样在页面出现
-        单位信息页面.验证页面顶部出现全局提示("名称已存在")
+        单位信息页面.验证页面顶部出现全局提示("场所名称不允许重复")
         self.log_step("验证新增失败-去重校验-页面提示信息")
         # 关闭抽屉
         单位信息页面.关闭抽屉()
@@ -158,7 +161,7 @@ class TestEdit(BaseCase):
         if not NEW_PERSON_ADDED:
             pytest.skip("新增用例执行失败，跳过修改相关测试")
 
-    @pytest.mark.usefixtures("后置操作_重置查询条件")
+    @pytest.mark.usefixtures("后置操作_重置查询条件", "后置操作_关闭抽屉")
     @pytest.mark.parametrize(
         "表单数据_搜索框, 表单数据",
         [
@@ -220,9 +223,9 @@ class TestEdit(BaseCase):
                                             归属部门=表单数据.get("归属部门"),
                                             入驻时间=表单数据.get("入驻时间"), 具体位置=表单数据.get("具体位置")
                                             )
-        单位信息页面.关闭抽屉()
 
     @pytest.mark.usefixtures("后置操作_重置查询条件")
+    @pytest.mark.usefixtures("后置操作_关闭抽屉")
     @pytest.mark.parametrize(
         "表单数据_搜索框, 表单数据",
 
@@ -265,10 +268,11 @@ class TestEdit(BaseCase):
         单位信息页面.点击提示弹窗中的确定按钮()
         self.log_step("提交表单")
         # 断言该人员已存在字样在页面出现
-        单位信息页面.验证页面顶部出现全局提示("名称已存在")
+        单位信息页面.验证页面顶部出现全局提示("场所名称不允许重复")
         self.log_step("验证编辑失败-去重校验-页面提示信息")
         # 关闭抽屉
-        单位信息页面.关闭抽屉()
+        # 单位信息页面.关闭抽屉()
+        单位信息页面.page.reload()
         # 填写搜索框
         单位信息页面.输入查询条件(**表单数据_搜索框)
         单位信息页面.click_button("搜索")

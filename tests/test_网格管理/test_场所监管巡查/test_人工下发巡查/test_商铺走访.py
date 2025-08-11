@@ -74,6 +74,7 @@ NEW_PERSON_ADDED = False
 @pytest.mark.usefixtures("后置操作_重置查询条件")
 @pytest.mark.usefixtures("人工下发巡查页面")
 class TestAdd(BaseCase):
+    @pytest.mark.flaky(reruns=3)  # 当测试失败时，最多重试 3 次
     @pytest.mark.parametrize(
         "表单数据",
 

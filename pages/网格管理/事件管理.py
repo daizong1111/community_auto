@@ -5,31 +5,24 @@ from module.base_query_page_new import BaseQueryPage
 
 
 class PageIncidentManage(BaseQueryPage):
+    # 类属性初始化为 None
+    输入框_类型 = None
+    输入框_社区 = "loc:(//form[contains(@class,'query-form')]//input[@placeholder='请选择社区']//ancestor::div[@class='el-form-item__content'])[2]"
+    输入框_小区 = "loc://form[contains(@class,'query-form')]//input[@placeholder='请选择小区']//ancestor::div[@class='el-form-item__content']"
+    输入框_日期 = "loc://form[contains(@class,'query-form')]//input[@placeholder='发起日期']//ancestor::div[@class='el-form-item__content']"
+    输入框_事件类型 = "loc://form[contains(@class,'query-form')]//input[@placeholder='请选择事件类型']//ancestor::div[@class='el-form-item__content']"
+    输入框_处理状态 = "loc://form[contains(@class,'query-form')]//input[@placeholder='请选择处理状态']//ancestor::div[@class='el-form-item__content']"
+    输入框_评价状态 = None
+    输入框_上报人 = "loc://form[contains(@class,'query-form')]//input[@placeholder='请输入上报人']//ancestor::div[@class='el-form-item__content']"
+    输入框_网格 = None
+    输入框_处理人 = "loc://form[contains(@class,'query-form')]//input[@placeholder='请输入当前处理人']//ancestor::div[@class='el-form-item__content']"
+    输入框_开始日期 = None
+    输入框_结束日期 = None
+    表单_处理 = None
+    处理记录节点_最新 = None
+
     def __init__(self, page: Page):
         super().__init__(page)
-        self.输入框_类型 = self.page.locator(
-            "(//form[contains(@class,'query-form')]//input[@placeholder='请选择社区']//ancestor::div[@class='el-form-item__content'])[1]").locator(
-            "visible=true")
-        self.输入框_社区 = self.page.locator("(//form[contains(@class,'query-form')]//input[@placeholder='请选择社区']//ancestor::div[@class='el-form-item__content'])[2]")
-        self.输入框_小区 = self.page.locator("//form[contains(@class,'query-form')]//input[@placeholder='请选择小区']//ancestor::div[@class='el-form-item__content']")
-        self.输入框_日期 = self.page.locator("//form[contains(@class,'query-form')]//input[@placeholder='发起日期']//ancestor::div[@class='el-form-item__content']")
-        self.输入框_事件类型 = self.page.locator(
-            "//form[contains(@class,'query-form')]//input[@placeholder='请选择事件类型']//ancestor::div[@class='el-form-item__content']").locator(
-            "visible=true")
-        self.输入框_处理状态 = self.page.locator(
-            "//form[contains(@class,'query-form')]//input[@placeholder='请选择处理状态']//ancestor::div[@class='el-form-item__content']")
-        self.输入框_评价状态 = self.page.locator(
-            "//form[contains(@class,'query-form')]//input[@placeholder='请选择评价状态']//ancestor::div[@class='el-form-item__content']")
-        self.输入框_上报人 = self.page.locator(
-            "//form[contains(@class,'query-form')]//input[@placeholder='请输入上报人']//ancestor::div[@class='el-form-item__content']")
-        self.输入框_网格 = self.page.locator(
-            "//form[contains(@class,'query-form')]//input[@placeholder='请选择网格']//ancestor::div[@class='el-form-item__content']")
-        self.输入框_处理人 = self.page.locator(
-            "//form[contains(@class,'query-form')]//input[@placeholder='请输入当前处理人']//ancestor::div[@class='el-form-item__content']")
-        self.输入框_开始日期 = self.page.locator("//form[contains(@class,'query-form')]//input[@placeholder='发起日期']")
-        self.输入框_结束日期 = self.page.locator("//form[contains(@class,'query-form')]//input[@placeholder='结束日期']")
-        self.表单_处理 = self.page.locator('//div[text()="工单处理"]/..')
-        self.处理记录节点_最新 = self.page.locator(".el-timeline-item__timestamp").first
 
     def 填写表单项_传入定位器(self, **kwargs):
         # 在页面对象中定义映射关系
