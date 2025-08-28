@@ -789,7 +789,7 @@ class PageObject:
 
     def 校验表单中数据成功修改(self, 表单最上层定位: Locator = None, timeout=None, 必填表单项: str = None, **kwargs):
         # 强制等待，避免内容未更新
-        self.page.wait_for_timeout(1000)
+        # self.page.wait_for_timeout(1000)
         # 等待整个表单可见
         # expect(self.page.locator(".el-drawer__wrapper")).to_be_visible()
         # 因为有些表单是选中了某些表单项后，会弹出一些新的表单项，所以需要处理
@@ -852,19 +852,19 @@ class PageObject:
             #     # for loc in 包含可见表单项的loc.all():
             #     #     loc.highlight()
             #     #     print(loc.text_content())
-        if 必填表单项 is not None:
-            loc_必填项 = self.locators.表单项中包含操作元素的最上级div(必填表单项, 处理后的表单最上层定位)
-            expect(loc_必填项).to_be_visible()
-            item = 0
-            while True:
-                div_必填项 = self.locators.表单项中包含操作元素的最上级div(必填表单项, 处理后的表单最上层定位)
-                必填项文本 = div_必填项.locator('input,textarea').input_value()
-                if len(必填项文本) > 1:
-                    break
-                self.page.wait_for_timeout(500)
-                item += 1
-                if item > 40:
-                    raise Exception("数据加载超时")
+        # if 必填表单项 is not None:
+        #     loc_必填项 = self.locators.表单项中包含操作元素的最上级div(必填表单项, 处理后的表单最上层定位)
+        #     expect(loc_必填项).to_be_visible()
+        #     item = 0
+        #     while True:
+        #         div_必填项 = self.locators.表单项中包含操作元素的最上级div(必填表单项, 处理后的表单最上层定位)
+        #         必填项文本 = div_必填项.locator('input,textarea').input_value()
+        #         if len(必填项文本) > 1:
+        #             break
+        #         self.page.wait_for_timeout(500)
+        #         item += 1
+        #         if item > 40:
+        #             raise Exception("数据加载超时")
 
         for 表单项, 内容 in kwargs.items():
             # if not 内容:

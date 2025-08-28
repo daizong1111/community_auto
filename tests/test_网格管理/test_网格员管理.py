@@ -301,9 +301,11 @@ class TestQuery(BaseCase):
         网格员管理页面.click_button("搜索")
         网格员管理页面.等待表格加载完成()
 
+
         # 定义字段与验证逻辑的映射
         def verify_居委会():
-            列表_居委会 = 网格员管理页面.get_column_values_by_name("所属社区")
+            列表_居委会 = 网格员管理页面.table.get_col_list("所属社区")
+            # 列表_居委会 = 网格员管理页面.get_column_values_by_name("所属社区")
             居委会_预期值 = 表单数据["居委会"].split("/")[-1]
 
             # 断言 列表_居委会 中的每一项都包含 居委会_预期值

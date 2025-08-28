@@ -435,21 +435,6 @@ class BaseQueryPage(PageObject):
                 raise Exception(f"未找到满足条件的行：{column_name} = {expected_value}")
 
         return rows
-    # def 获取详情按钮(self, 关键字):
-    #     return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
-    #                                                                                     has_text=关键字).first.locator(
-    #         "button", has_text="详情")
-    #
-    # def 点击详情按钮(self, 关键字):
-    #     self.获取详情按钮(关键字).evaluate("(el) => el.click()")
-    #
-    # def 获取删除按钮(self, 关键字):
-    #     return self.page.locator("(//table[@class='el-table__body'])[1]/tbody").locator("tr",
-    #                                                                                     has_text=关键字).first.locator(
-    #         "button", has_text="删除")
-    #
-    # def 点击删除按钮(self, 关键字):
-    #     self.获取删除按钮(关键字).evaluate("(el) => el.click()")
 
     def 切换到某标签页(self, 标签页名称:str):
         self.page.locator(".el-tabs__item").get_by_text(标签页名称,exact=True).click()
