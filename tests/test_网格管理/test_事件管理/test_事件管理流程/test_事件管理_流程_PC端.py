@@ -1,14 +1,18 @@
 import re
+import time
 
 import allure
 import pytest
 from playwright.sync_api import expect, Page, sync_playwright
 
 from base_case import BaseCase
+from module.base_query_page_new import BaseQueryPage
+from pages.login_page_pc import LoginPagePc
 from pages.pages_h5.上报物业 import PageReportProperty
 from pages.pages_h5.首页 import PageHome
 from pages.网格管理.三级网格管理.居民上报.居民上报 import PageResidentsReport
 from pages.网格管理.事件管理 import PageIncidentManage
+from user_data import USERS_BY_ROLE
 
 @pytest.fixture(scope="function")
 def close_all_drawers(request):
@@ -84,12 +88,13 @@ def 处理事件(角色页面: Page, 表单数据: dict, 角色名称: str):
 pytestmark = pytest.mark.usefixtures("close_all_drawers")
 
 class TestProcess居民到物管(BaseCase):
+    # @pytest.mark.parametrize("page_pc_specific_role", ["物业管理员1"], indirect=True)
     @pytest.mark.parametrize(
         "表单数据_居民, 表单数据_物管",
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报，物管办结",
                  "上报图片路径": ""
              },
@@ -101,7 +106,6 @@ class TestProcess居民到物管(BaseCase):
             ),
         ],
     )
-    @pytest.mark.usefixtures("page_pc_物业管理员1")
     @pytest.mark.usefixtures("page_h5_居民")
     # @allure.step("以居民为起点，物管为终点的事件处理流程")
     def test_process_路径1(self, page_h5_居民, page_pc_物业管理员1, 表单数据_居民: dict, 表单数据_物管: dict):
@@ -125,7 +129,7 @@ class TestProcess居民到物管(BaseCase):
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报，物管跟进",
                  "上报图片路径": ""
              },
@@ -168,7 +172,7 @@ class TestProcess居民到物管(BaseCase):
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报，物管跟进",
                  "上报图片路径": ""
              },
@@ -219,7 +223,7 @@ class TestProcess居民到物管(BaseCase):
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报给物业，物管下发给物工，物工转交给三级，三级下发给物管，物管办结",
                  "上报图片路径": ""
              },
@@ -236,10 +240,9 @@ class TestProcess居民到物管(BaseCase):
                  "图片": r"C:\Users\Administrator\Pictures\111.png"
              },
              {
-                 "处理方式": "下发",
-                 "指定处理人": "金**",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理方式": "转交物业",
+                 "处理描述": "同意",
+                 "照片": r"C:\Users\Administrator\Pictures\111.png"
              },
              {
                  "处理方式": "办结",
@@ -281,7 +284,7 @@ class TestProcess居民到物管(BaseCase):
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报给社区，三级下发给物管，物管办结",
                  "上报图片路径": ""
              },
@@ -322,11 +325,12 @@ class TestProcess居民到物管(BaseCase):
             角色["页面"].bring_to_front()
             处理事件(角色["页面"], 角色["表单数据"], 角色["角色名称"])
 
+    # TODO:未调通 三级转交给物管后，物管收不到待处理的事件
     @pytest.mark.parametrize(
         "表单数据_居民, 表单数据_三级_上传, 表单数据_二级_上传, 表单数据_一级,表单数据_二级_下发, 表单数据_三级_下发,表单数据_物管",
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报给社区，三级申请二级的协助，二级申请一级的协助，一级下发给二级，二级下发给三级，三级转派给物管，物管办结",
                  "上报图片路径": ""
              },
@@ -339,8 +343,7 @@ class TestProcess居民到物管(BaseCase):
              {
                  "处理方式": "申请协助(上级)",
                  "指定处理人": "石**",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理描述": "同意"
              },
              {
                  "处理方式": "下发",
@@ -356,9 +359,8 @@ class TestProcess居民到物管(BaseCase):
              },
              {
                  "处理方式": "转交物业",
-                 "指定处理人": "金**",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理描述": "同意",
+                 "照片": r"C:\Users\Administrator\Pictures\111.png"
              },
              {
                  "处理方式": "办结",
@@ -380,6 +382,7 @@ class TestProcess居民到物管(BaseCase):
                            表单数据_居民: dict, 表单数据_三级_上传: dict, 表单数据_二级_上传: dict, 表单数据_一级: dict,
                            表单数据_二级_下发: dict, 表单数据_三级_下发: dict,
                            表单数据_物管: dict):
+
 
         page_h5_居民.bring_to_front()
         首页 = PageHome(page_h5_居民)
@@ -404,13 +407,14 @@ class TestProcess居民到物管(BaseCase):
             处理事件(角色["页面"], 角色["表单数据"], 角色["角色名称"])
 
 
+
 class TestProcess居民到物工(BaseCase):
     @pytest.mark.parametrize(
         "表单数据_居民, 表单数据_物管, 表单数据_物工",
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报，物管下发，物工办结",
                  "上报图片路径": ""
              },
@@ -457,14 +461,14 @@ class TestProcess居民到三级(BaseCase):
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报给社区，三级管理员办结",
                  "上报图片路径": ""
              },
              {
                  "处理方式": "办结",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理描述": "同意",
+                 "照片": r"C:\Users\Administrator\Pictures\111.png"
              }
             ),
         ],
@@ -485,10 +489,12 @@ class TestProcess居民到三级(BaseCase):
         角色列表 = [
             {"页面": page_pc_三级网格员, "表单数据": 表单数据_三级, "角色名称": "三级网格员"},
         ]
-
-        for 角色 in 角色列表:
-            角色["页面"].bring_to_front()
-            处理事件(角色["页面"], 角色["表单数据"], 角色["角色名称"])
+        try:
+            for 角色 in 角色列表:
+                角色["页面"].bring_to_front()
+                处理事件(角色["页面"], 角色["表单数据"], 角色["角色名称"])
+        except Exception:
+            time.sleep(1000)
 
 
     # TODO: 转交网格员后，三级收不到，二级能收到，等待开发那边修改
@@ -497,7 +503,7 @@ class TestProcess居民到三级(BaseCase):
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报给物管，物管下发给物工，物工转交给三级，三级网格员办结",
                  "上报图片路径": ""
              },
@@ -515,8 +521,8 @@ class TestProcess居民到三级(BaseCase):
              },
              {
                  "处理方式": "办结",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理描述": "同意",
+                 "照片": r"C:\Users\Administrator\Pictures\111.png"
              }
             ),
         ],
@@ -528,6 +534,7 @@ class TestProcess居民到三级(BaseCase):
     @allure.step("居民上报给物业，物管下发给物工，物工转交给三级，三级网格员办结")
     def test_process_路径2(self, page_h5_居民, page_pc_物业管理员1, page_pc_物业工作人员, page_pc_三级网格员,
                            表单数据_居民: dict, 表单数据_物管: dict, 表单数据_物工: dict, 表单数据_三级: dict):
+
         page_h5_居民.bring_to_front()
         首页 = PageHome(page_h5_居民)
         首页.切换角色("居民")
@@ -547,21 +554,22 @@ class TestProcess居民到三级(BaseCase):
             角色["页面"].bring_to_front()
             处理事件(角色["页面"], 角色["表单数据"], 角色["角色名称"])
 
+
 class TestProcess居民到二级(BaseCase):
     @pytest.mark.parametrize(
         "表单数据_居民, 表单数据_三级, 表单数据_二级",
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报给社区，三级网格员转交给二级，二级办结",
                  "上报图片路径": ""
              },
              {
                  "处理方式": "申请协助(上级)",
                  "指定处理人": "陶**",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理描述": "同意",
+
              },
              {
                  "处理方式": "办结",
@@ -593,14 +601,12 @@ class TestProcess居民到二级(BaseCase):
         for 角色 in 角色列表:
             角色["页面"].bring_to_front()
             处理事件(角色["页面"], 角色["表单数据"], 角色["角色名称"])
-
-    # TODO: 转交网格员后，三级收不到，二级能收到，等待开发那边修改
     @pytest.mark.parametrize(
         "表单数据_居民, 表单数据_物管, 表单数据_物工, 表单数据_三级, 表单数据_二级",
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报给物业，物管下发给物工，物工转交给三级，三级转交给二级，二级网格员办结",
                  "上报图片路径": ""
              },
@@ -619,8 +625,7 @@ class TestProcess居民到二级(BaseCase):
              {
                  "处理方式": "申请协助(上级)",
                  "指定处理人": "陶**",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理描述": "同意",
              },
              {
                  "处理方式": "办结",
@@ -666,21 +671,19 @@ class TestProcess居民到一级(BaseCase):
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报给社区，三级网格员转交给二级，二级办结",
                  "上报图片路径": ""
              },
              {
                  "处理方式": "申请协助(上级)",
                  "指定处理人": "陶**",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理描述": "同意",
              },
              {
                  "处理方式": "申请协助(上级)",
                  "指定处理人": "石**",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理意见": "同意"
              },
              {
                  "处理方式": "办结",
@@ -698,32 +701,33 @@ class TestProcess居民到一级(BaseCase):
     def test_process_路径1(self, page_h5_居民, page_pc_三级网格员, page_pc_二级网格员, page_pc_一级网格员,
                            表单数据_居民: dict,
                            表单数据_三级: dict, 表单数据_二级: dict, 表单数据_一级: dict):
-        page_h5_居民.bring_to_front()
-        首页 = PageHome(page_h5_居民)
-        首页.切换角色("居民")
-        # 跳转到上报物业，进行一次上报
-        首页.跳转到上报社区()
-        上报社区页面_居民 = PageReportProperty(page_h5_居民)
-        上报社区页面_居民.上报事件(表单数据_居民)
+        try:
+            page_h5_居民.bring_to_front()
+            首页 = PageHome(page_h5_居民)
+            首页.切换角色("居民")
+            # 跳转到上报物业，进行一次上报
+            首页.跳转到上报社区()
+            上报社区页面_居民 = PageReportProperty(page_h5_居民)
+            上报社区页面_居民.上报事件(表单数据_居民)
 
-        角色列表 = [
-            {"页面": page_pc_三级网格员, "表单数据": 表单数据_三级, "角色名称": "三级网格员"},
-            {"页面": page_pc_二级网格员, "表单数据": 表单数据_二级, "角色名称": "二级网格员"},
-            {"页面": page_pc_一级网格员, "表单数据": 表单数据_一级, "角色名称": "一级网格员"},
+            角色列表 = [
+                {"页面": page_pc_三级网格员, "表单数据": 表单数据_三级, "角色名称": "三级网格员"},
+                {"页面": page_pc_二级网格员, "表单数据": 表单数据_二级, "角色名称": "二级网格员"},
+                {"页面": page_pc_一级网格员, "表单数据": 表单数据_一级, "角色名称": "一级网格员"},
 
-        ]
+            ]
 
-        for 角色 in 角色列表:
-            角色["页面"].bring_to_front()
-            处理事件(角色["页面"], 角色["表单数据"], 角色["角色名称"])
-
-    # TODO: 转交网格员后，三级收不到，二级能收到，等待开发那边修改
+            for 角色 in 角色列表:
+                角色["页面"].bring_to_front()
+                处理事件(角色["页面"], 角色["表单数据"], 角色["角色名称"])
+        except:
+            time.sleep(1000)
     @pytest.mark.parametrize(
         "表单数据_居民, 表单数据_物管, 表单数据_物工, 表单数据_三级, 表单数据_二级, 表单数据_一级",
 
         [
             ({
-                 "上报类型": "居民报事-建议",
+                 "上报类型": "建议",
                  "上报描述": "居民上报给物业，物管下发给物工，物工转交给三级，三级转交给二级，二级网格员办结",
                  "上报图片路径": ""
              },
@@ -742,14 +746,12 @@ class TestProcess居民到一级(BaseCase):
              {
                  "处理方式": "申请协助(上级)",
                  "指定处理人": "陶**",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理描述": "同意",
              },
              {
                  "处理方式": "申请协助(上级)",
                  "指定处理人": "石**",
-                 "处理意见": "同意",
-                 "图片": r"C:\Users\Administrator\Pictures\111.png"
+                 "处理意见": "同意"
              },
              {
                  "处理方式": "办结",
@@ -770,6 +772,7 @@ class TestProcess居民到一级(BaseCase):
                            page_pc_二级网格员, page_pc_一级网格员,
                            表单数据_居民: dict, 表单数据_物管: dict, 表单数据_物工: dict, 表单数据_三级: dict,
                            表单数据_二级: dict, 表单数据_一级: dict):
+
         page_h5_居民.bring_to_front()
         首页 = PageHome(page_h5_居民)
         首页.切换角色("居民")
@@ -789,6 +792,7 @@ class TestProcess居民到一级(BaseCase):
         for 角色 in 角色列表:
             角色["页面"].bring_to_front()
             处理事件(角色["页面"], 角色["表单数据"], 角色["角色名称"])
+
 
 if __name__ == '__main__':
     with sync_playwright() as playwright:

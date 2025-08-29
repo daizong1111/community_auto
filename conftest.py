@@ -223,114 +223,331 @@ def page_h5_二级网格员(playwright, browser):
     context.close()  # 关闭上下文
 
 
-@pytest.fixture(scope="module")
-def page_pc_物业管理员1(browser):
-    context = browser.new_context()
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPagePc(page)
-    login_page.goto()
-    login_page.登录(USERS_BY_ROLE['物业管理员1']['username'], USERS_BY_ROLE['物业管理员1']['password'], '202208')
-    login_page.进入系统()
-    # 登录后跳转到事业管理页面
-    query_page = BaseQueryPage(page)
-    query_page.跳转到某菜单("物业服务", "事件管理")
-    role_to_page['物业管理员1'] = page
-    yield page
-    page.close()
-    context.close()
+# @pytest.fixture(scope="module")
+# def page_pc_物业管理员1(browser):
+#     context = browser.new_context()
+#     page = context.new_page()  # 打开新页面
+#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
+#     login_page = LoginPagePc(page)
+#     login_page.goto()
+#     login_page.登录(USERS_BY_ROLE['物业管理员1']['username'], USERS_BY_ROLE['物业管理员1']['password'], '202208')
+#     login_page.进入系统()
+#     # 登录后跳转到事业管理页面
+#     query_page = BaseQueryPage(page)
+#     query_page.跳转到某菜单("物业服务", "事件管理")
+#     role_to_page['物业管理员1'] = page
+#     yield page
+#     page.close()
+#     context.close()
+#
+#
+# @pytest.fixture(scope="module")
+# def page_pc_物业管理员2(browser):
+#     context = browser.new_context()
+#     page = context.new_page()  # 打开新页面
+#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
+#     login_page = LoginPagePc(page)
+#     login_page.goto()
+#     login_page.登录(USERS_BY_ROLE['物业管理员2']['username'], USERS_BY_ROLE['物业管理员2']['password'], '202208')
+#     login_page.进入系统()
+#     # 登录后跳转到事业管理页面
+#     query_page = BaseQueryPage(page)
+#     query_page.跳转到某菜单("物业服务", "事件管理")
+#     role_to_page['物业管理员2'] = page
+#     yield page
+#     page.close()
+#     context.close()
+#
+#
+# @pytest.fixture(scope="module")
+# def page_pc_物业工作人员(browser):
+#     context = browser.new_context()
+#     page = context.new_page()  # 打开新页面
+#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
+#     login_page = LoginPagePc(page)
+#     login_page.goto()
+#     login_page.登录(USERS_BY_ROLE['物业工作人员']['username'], USERS_BY_ROLE['物业工作人员']['password'], '202208')
+#     login_page.进入系统()
+#     # 登录后跳转到事业管理页面
+#     query_page = BaseQueryPage(page)
+#     query_page.跳转到某菜单("物业服务", "事件管理")
+#     role_to_page['物业工作人员'] = page
+#     yield page
+#     page.close()
+#     context.close()
+#
+#
+# @pytest.fixture(scope="module")
+# def page_pc_三级网格员(browser):
+#     context = browser.new_context()
+#     page = context.new_page()  # 打开新页面
+#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
+#     login_page = LoginPagePc(page)
+#     login_page.goto()
+#     login_page.登录(USERS_BY_ROLE['三级网格员']['username'], USERS_BY_ROLE['三级网格员']['password'], '202208')
+#     login_page.进入系统()
+#     # 登录后跳转到事业管理页面
+#     query_page = BaseQueryPage(page)
+#     # query_page.跳转到某菜单("网格管理", "事件管理")
+#     query_page.跳转到某菜单("网格管理", "三级网格管理/居民上报")
+#
+#     role_to_page['三级网格员'] = page
+#     yield page
+#     page.close()
+#     context.close()
+#
+#
+# @pytest.fixture(scope="module")
+# def page_pc_二级网格员(browser):
+#     context = browser.new_context()
+#     page = context.new_page()  # 打开新页面
+#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
+#     login_page = LoginPagePc(page)
+#     login_page.goto()
+#     login_page.登录(USERS_BY_ROLE['二级网格员']['username'], USERS_BY_ROLE['二级网格员']['password'], '202208')
+#     login_page.进入系统()
+#     # 登录后跳转到事业管理页面
+#     query_page = BaseQueryPage(page)
+#     query_page.跳转到某菜单("网格管理", "事件管理")
+#     role_to_page['二级网格员'] = page
+#     yield page
+#     page.close()
+#     context.close()
+#
+#
+# @pytest.fixture(scope="module")
+# def page_pc_一级网格员(browser):
+#     context = browser.new_context()
+#     page = context.new_page()  # 打开新页面
+#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
+#     login_page = LoginPagePc(page)
+#     login_page.goto()
+#     login_page.登录(USERS_BY_ROLE['一级网格员']['username'], USERS_BY_ROLE['一级网格员']['password'], '202208')
+#     login_page.进入系统()
+#     # 登录后跳转到事业管理页面
+#     query_page = BaseQueryPage(page)
+#     query_page.跳转到某菜单("网格管理", "事件管理")
+#     role_to_page['一级网格员'] = page
+#     yield page
+#     page.close()
+#     context.close()
+
+# # 定义需要创建页面夹具的物业相关角色
+# PROPERTY_ROLES = ['物业管理员1', '物业管理员2', '物业工作人员']
+# # 定义需要创建页面夹具的网格员角色
+# GRID_ROLES = ['三级网格员', '二级网格员', '一级网格员']
+#
+#
+# @pytest.fixture(scope="module")
+# def page_pc_by_roles(request, browser):
+#     """根据角色列表参数创建多个页面的夹具，会自动跳转到相应菜单"""
+#     roles = request.param if isinstance(request.param, list) else [request.param]
+#     pages_dict = {}
+#     contexts = []
+#
+#     for role in roles:
+#         context = browser.new_context()
+#         contexts.append(context)
+#         page = context.new_page()
+#         page.set_default_timeout(5000)
+#         login_page = LoginPagePc(page)
+#         login_page.goto()
+#         login_page.登录(USERS_BY_ROLE[role]['username'], USERS_BY_ROLE[role]['password'], '202208')
+#         login_page.进入系统()
+#
+#         query_page = BaseQueryPage(page)
+#         # 根据角色类型跳转到相应的菜单
+#         if role in PROPERTY_ROLES:
+#             query_page.跳转到某菜单("物业服务", "事件管理")
+#         elif role == '三级网格员':
+#             query_page.跳转到某菜单("网格管理", "三级网格管理/居民上报")
+#         else:
+#             # 适用于一级、二级网格员
+#             query_page.跳转到某菜单("网格管理", "事件管理")
+#
+#         role_to_page[role] = page
+#         pages_dict[role] = page
+#
+#     yield pages_dict
+#
+#     # 清理资源
+#     for page in pages_dict.values():
+#         page.close()
+#     for context in contexts:
+#         context.close()
+
+import re
+import time
+
+import allure
+import pytest
+from playwright.sync_api import expect, Page, sync_playwright
+
+from base_case import BaseCase
+from module.base_query_page_new import BaseQueryPage
+from pages.login_page_pc import LoginPagePc
+from pages.pages_h5.上报物业 import PageReportProperty
+from pages.pages_h5.首页 import PageHome
+from pages.网格管理.三级网格管理.居民上报.居民上报 import PageResidentsReport
+from pages.网格管理.事件管理 import PageIncidentManage
+from user_data import USERS_BY_ROLE
+
+# 定义需要创建页面夹具的物业相关角色
+PROPERTY_ROLES = ['物业管理员1', '物业管理员2', '物业工作人员']
+# 定义需要创建页面夹具的网格员角色
+GRID_ROLES = ['三级网格员', '二级网格员', '一级网格员']
+
+# 存放角色到page的映射
+role_to_page = {}
+
+# 创建一个全局变量来存储复用的页面
+_shared_pages_dict = None
+_shared_contexts = None
+_browser_instance = None
 
 
-@pytest.fixture(scope="module")
-def page_pc_物业管理员2(browser):
-    context = browser.new_context()
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPagePc(page)
-    login_page.goto()
-    login_page.登录(USERS_BY_ROLE['物业管理员2']['username'], USERS_BY_ROLE['物业管理员2']['password'], '202208')
-    login_page.进入系统()
-    # 登录后跳转到事业管理页面
-    query_page = BaseQueryPage(page)
-    query_page.跳转到某菜单("物业服务", "事件管理")
-    role_to_page['物业管理员2'] = page
-    yield page
-    page.close()
-    context.close()
+@pytest.fixture(scope="session")
+def page_pc_by_roles_shared(request, browser):
+    """根据角色列表参数创建多个页面的夹具，会自动跳转到相应菜单，并在测试间复用"""
+    global _shared_pages_dict, _shared_contexts, _browser_instance
+
+    # 如果已经有共享页面且浏览器实例相同，则直接返回
+    if _shared_pages_dict is not None and _browser_instance is browser:
+        yield _shared_pages_dict
+        return
+
+    # 否则创建新的共享页面
+    # 收集所有测试用例中需要的角色
+    all_roles = set()
+    for mark in request.node.iter_markers("parametrize"):
+        if "page_pc_by_roles" in str(mark.args):
+            for param in mark.args[1]:
+                if isinstance(param[0], list):
+                    all_roles.update(param[0])
+                else:
+                    all_roles.add(param[0])
+
+    pages_dict = {}
+    contexts = []
+
+    for role in all_roles:
+        context = browser.new_context()
+        contexts.append(context)
+        page = context.new_page()
+        page.set_default_timeout(5000)
+        login_page = LoginPagePc(page)
+        login_page.goto()
+        login_page.登录(USERS_BY_ROLE[role]['username'], USERS_BY_ROLE[role]['password'], '202208')
+        login_page.进入系统()
+
+        query_page = BaseQueryPage(page)
+        # 根据角色类型跳转到相应的菜单
+        if role in PROPERTY_ROLES:
+            query_page.跳转到某菜单("物业服务", "事件管理")
+        elif role == '三级网格员':
+            query_page.跳转到某菜单("网格管理", "三级网格管理/居民上报")
+        else:
+            # 适用于一级、二级网格员
+            query_page.跳转到某菜单("网格管理", "事件管理")
+
+        role_to_page[role] = page
+        pages_dict[role] = page
+
+    # 保存共享资源
+    _shared_pages_dict = pages_dict
+    _shared_contexts = contexts
+    _browser_instance = browser
+
+    yield pages_dict
+
+    # 清理资源（只在会话结束时）
+    if _shared_pages_dict is not None:
+        for page in _shared_pages_dict.values():
+            try:
+                page.close()
+            except:
+                pass
+        for context in _shared_contexts:
+            try:
+                context.close()
+            except:
+                pass
+        _shared_pages_dict = None
+        _shared_contexts = None
+        _browser_instance = None
 
 
-@pytest.fixture(scope="module")
-def page_pc_物业工作人员(browser):
-    context = browser.new_context()
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPagePc(page)
-    login_page.goto()
-    login_page.登录(USERS_BY_ROLE['物业工作人员']['username'], USERS_BY_ROLE['物业工作人员']['password'], '202208')
-    login_page.进入系统()
-    # 登录后跳转到事业管理页面
-    query_page = BaseQueryPage(page)
-    query_page.跳转到某菜单("物业服务", "事件管理")
-    role_to_page['物业工作人员'] = page
-    yield page
-    page.close()
-    context.close()
+@pytest.fixture(scope="function")
+def page_pc_by_roles(request, browser):
+    """根据测试用例参数返回需要的页面子集"""
+    global _shared_pages_dict
+
+    # 确保共享页面已创建
+    if _shared_pages_dict is None:
+        # 如果还没有共享页面，创建一个临时的
+        roles = request.param if isinstance(request.param, list) else [request.param]
+        pages_dict = {}
+        contexts = []
+
+        for role in roles:
+            context = browser.new_context()
+            contexts.append(context)
+            page = context.new_page()
+            page.set_default_timeout(5000)
+            login_page = LoginPagePc(page)
+            login_page.goto()
+            login_page.登录(USERS_BY_ROLE[role]['username'], USERS_BY_ROLE[role]['password'], '202208')
+            login_page.进入系统()
+
+            query_page = BaseQueryPage(page)
+            # 根据角色类型跳转到相应的菜单
+            if role in PROPERTY_ROLES:
+                query_page.跳转到某菜单("物业服务", "事件管理")
+            elif role == '三级网格员':
+                query_page.跳转到某菜单("网格管理", "三级网格管理/居民上报")
+            else:
+                # 适用于一级、二级网格员
+                query_page.跳转到某菜单("网格管理", "事件管理")
+
+            role_to_page[role] = page
+            pages_dict[role] = page
+
+        yield pages_dict
+
+        # 清理临时资源
+        for page in pages_dict.values():
+            page.close()
+        for context in contexts:
+            context.close()
+    else:
+        # 从共享页面中返回需要的子集
+        roles = request.param if isinstance(request.param, list) else [request.param]
+        pages_dict = {role: _shared_pages_dict[role] for role in roles if role in _shared_pages_dict}
+        yield pages_dict
 
 
-@pytest.fixture(scope="module")
-def page_pc_三级网格员(browser):
-    context = browser.new_context()
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPagePc(page)
-    login_page.goto()
-    login_page.登录(USERS_BY_ROLE['三级网格员']['username'], USERS_BY_ROLE['三级网格员']['password'], '202208')
-    login_page.进入系统()
-    # 登录后跳转到事业管理页面
-    query_page = BaseQueryPage(page)
-    # query_page.跳转到某菜单("网格管理", "事件管理")
-    query_page.跳转到某菜单("网格管理", "三级网格管理/居民上报")
+@pytest.fixture(scope="function")
+def close_all_drawers(request):
+    """
+    在测试用例执行后关闭所有角色页面的抽屉
+    """
+    yield
+    # 获取所有已打开的页面对象
+    opened_pages = []
 
-    role_to_page['三级网格员'] = page
-    yield page
-    page.close()
-    context.close()
+    for name, value in request.node.funcargs.items():
+        if isinstance(value, Page):
+            opened_pages.append(value)
 
-
-@pytest.fixture(scope="module")
-def page_pc_二级网格员(browser):
-    context = browser.new_context()
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPagePc(page)
-    login_page.goto()
-    login_page.登录(USERS_BY_ROLE['二级网格员']['username'], USERS_BY_ROLE['二级网格员']['password'], '202208')
-    login_page.进入系统()
-    # 登录后跳转到事业管理页面
-    query_page = BaseQueryPage(page)
-    query_page.跳转到某菜单("网格管理", "事件管理")
-    role_to_page['二级网格员'] = page
-    yield page
-    page.close()
-    context.close()
+    # 刷新所有已打开的页面
+    for page in opened_pages:
+        try:
+            page.reload()
+        except Exception as e:
+            print(f"刷新页面失败: {e}")
 
 
-@pytest.fixture(scope="module")
-def page_pc_一级网格员(browser):
-    context = browser.new_context()
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPagePc(page)
-    login_page.goto()
-    login_page.登录(USERS_BY_ROLE['一级网格员']['username'], USERS_BY_ROLE['一级网格员']['password'], '202208')
-    login_page.进入系统()
-    # 登录后跳转到事业管理页面
-    query_page = BaseQueryPage(page)
-    query_page.跳转到某菜单("网格管理", "事件管理")
-    role_to_page['一级网格员'] = page
-    yield page
-    page.close()
-    context.close()
+# ... rest of the file remains unchanged ...
 
 
 # 监听页面的请求
@@ -832,7 +1049,7 @@ class Locator(_Locator):
             ...
 
 
-mapping.register(LocatorImpl, Locator)
+# mapping.register(LocatorImpl, Locator)
 
 
 # @pytest.hookimpl(trylast=True)

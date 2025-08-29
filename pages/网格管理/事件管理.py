@@ -18,11 +18,11 @@ class PageIncidentManage(BaseQueryPage):
     输入框_处理人 = "loc://form[contains(@class,'query-form')]//input[@placeholder='请输入当前处理人']//ancestor::div[@class='el-form-item__content']"
     输入框_开始日期 = None
     输入框_结束日期 = None
-    表单_处理 = None
     处理记录节点_最新 = None
 
     def __init__(self, page: Page):
         super().__init__(page)
+        self.表单_处理 = page.locator('div[role="dialog"]').locator("visible=true")
 
     def 填写表单项_传入定位器(self, **kwargs):
         # 在页面对象中定义映射关系

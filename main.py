@@ -30,7 +30,9 @@ def run_tests():
 
                    # 'tests/test_基础信息/test_场所管理',
                    # 'tests/test_网格管理/test_事件管理/test_事件管理流程/test_事件管理_流程_H5端.py',
-                   'tests/test_网格管理/test_事件管理/test_事件管理流程/test_事件管理_流程_PC端.py',
+                   # 'tests/test_网格管理/test_事件管理/test_事件管理流程/test_事件管理_流程_PC端.py',
+
+                   'tests/test_网格管理/test_事件管理/test_事件管理流程/test_事件管理_流程_PC端_新.py',
 
                    # 'tests/test_网格管理',
 

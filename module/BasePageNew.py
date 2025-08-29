@@ -1117,7 +1117,7 @@ if __name__ == '__main__':
 
         # page.获取详情页中的数据(page.page.locator(".el-drawer"))
 
-        page.表单_树形控件(树容器=page.page.locator(".el-tree").nth(1), 路径="全选/付**__三级网格员,全选/杨**__三级网格员")
+        # page.表单_树形控件(树容器=page.page.locator(".el-tree").nth(1), 路径="全选/付**__三级网格员,全选/杨**__三级网格员")
 
         # page.表单_文本框填写("心愿内容","")
 
