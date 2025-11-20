@@ -1,4 +1,4 @@
-greenlet==3.0.3
+# greenlet==3.0.3
 allure-pytest==2.13.5
 allure-python-commons==2.13.5
 attrs==24.2.0
