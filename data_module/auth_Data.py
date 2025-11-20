@@ -17,16 +17,33 @@ class MyData:
             pass
             # todo 把feishu转换成字典的方法
         else:
-            user = {"playwright":
-                        {"测试员":
-                             {"username": "winni", "password": "playwright001"},
-                         "项目经理":
-                             {"username": "zhang20121104", "password": "playwright123"}},
-                    "playwright0":
-                        {"测试员":
-                             {"username": "winni1", "password": "playwright001"},
-                         "项目经理":
-                             {"username": "tracy2012", "password": "playwright123"}},
-                    }
+            user = {
+                    # 测试环境
+                    "test":
+                    {
+                     "错误用户名":
+                         {"username": "ahs", "password": "Chinaictc@2022"},
+                     "省级管理员-安徽省":
+                         {"username": "ahsAdmin", "password": "Chinaictc@2022"},
+                     "市级管理员-合肥市":
+                         {"username": "shiji7969", "password": "dxnb66@2024_"},
+                     "区县级管理员-庐阳区":
+                         {"username": "quji7969", "password": "dxnb66@2024_"},
+                     "街道管理员-中电数智街道":
+                         {"username": "jdsdz6823", "password": "dxnb66@2024_"},
+                     "社区管理员-中电数智社区":
+                         {"username": "sqjyf3802", "password": "dxnb66@2024_"},
+                     "物业管理人员-天王巷":
+                         {"username":"wyjyf7916", "password": "dxnb66@2024_"},
+                     "物业工作人员-小区99":
+                         {"username": "WYgzrysdz6823", "password": "dxnb66@2024_"},
+                     "一级网格员":
+                         {"username": "yiji3066", "password": "dxnb66@2024_"},
+                     "二级网格员":
+                        {"username": "erji0509", "password": "dxnb66@2024_"},
+                     "三级网格员":
+                        {"username": "sanji7969", "password": "dxnb66@2024_"},
+                     },
+                   }
 
         return user[被测环境][角色名称]

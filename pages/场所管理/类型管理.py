@@ -1,8 +1,8 @@
 from playwright.sync_api import Page
 
 from module.BasePage import PageObject
-class 房屋管理(PageObject):
+class 类型管理(PageObject):
     def __init__(self, page: Page):
         super().__init__(page)
-        self.url = "/sqaq/syfw/fwgl"
+        self.url = "/sqaq/csgl/lxgl"
 

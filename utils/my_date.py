@@ -14,7 +14,6 @@ def 返回当前时间xxxx_xx_xx加N天(增加的天数: int, 格式: Optional[L
     else:
         return (datetime.datetime.now() + datetime.timedelta(days=增加的天数)).strftime(str(格式))
 
-
 def 返回当前时间时间戳():
     return datetime.datetime.now().timestamp()
 

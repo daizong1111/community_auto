@@ -3,8 +3,6 @@ import re
 from typing import Union
 
 from playwright.sync_api import Locator, Page, sync_playwright, expect
-from module import *
-
 
 class Table:
     def __init__(self, page: Page, 表格序号: int = 0):
@@ -18,6 +16,8 @@ class Table:
         # 有些场景下，表格可能有多个tbody，这里只取第一个
         self.table_body = self.table_div.locator("tbody").first
         self.table_header_tr = self.table_div.locator("thead").first.locator("tr")
+        # 表格前的行单选框
+        self.labels_loc = self.table_body.locator(".el-checkbox")
 
     def get_header_index(self, 表头文字: str) -> int:
         return self.table_header_tr.locator("th").all_text_contents().index(表头文字)
@@ -87,56 +87,6 @@ class Table:
 
         # return self.page.locator("//table[@class='el-table__body']//tbody").locator("visible=true").first.locator("tr")
 
-    # def 获取表格中指定行的所有字段值(self, index) -> list:
-    #     """ index 为行号，从1开始 """
-    #     return self.get_table_rows().nth(index-1).locator("td").all_text_contents()[:-1]
-
-    def get_column_values_by_name(self, column_name: str) -> list:
-        # 把表格里面所有数据提取出来
-        table_body = self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").first
-
-        # 根据查的字段去找一下是表格里面的第几列
-        # ;locator('//table//tr')/all_inner_texts()  ===>  [‘aaaa,aaa,322,22’，‘111,222,33,444,55’]
-        # 根据idx遍历每一行，从每一行中拿到想要的列的数据
-        # self.等待表格加载完成()
-
-        # 等待表格加载完成并不能真正等到它加载完成，要更换
-        self.page.wait_for_timeout(1000)
-        """
-        获取表格中当前页指定列名的所有字段值。
-        :param column_name: 表格列名（完全匹配）
-        :return: 指定列的所有字段值列表
-        """
-        # 定位表格主体
-        table_body = self.page.locator("(//table[@class='el-table__body'])").locator("visible=true").first
-
-        # 获取表头行的所有列名单元格
-        header_cells = self.page.locator(".el-table__header").locator("visible=true").first.locator("th").all()
-
-        # 查找目标列的索引
-        column_index = -1
-        for idx, cell in enumerate(header_cells):
-            # print(cell.inner_text())
-            if cell.inner_text().strip() == column_name:
-                column_index = idx
-                break
-
-        assert column_index != -1, f"未找到列名为 '{column_name}' 的列"
-
-        # 获取所有数据行
-        rows = table_body.locator("tbody > tr").all()
-
-        # 提取每行对应列的数据
-        column_values = []
-
-        for row in rows:
-            cell_value = row.locator(f"td:nth-child({column_index + 1})").inner_text().strip()
-            column_values.append(cell_value)
-        # 去重
-        # column_values = list(set(column_values))
-
-        return column_values
-
     def 等待表格加载完成(self):
         self.page.wait_for_timeout(1000)
         expect(self.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=10000)
@@ -181,20 +131,6 @@ class Table:
             else:
                 # 退出循环
                 break
-
-        # while True:
-        #     # 此处，使用列表推导式进行了优化，避免使用双重for循环
-        #     rows = self.get_table_rows().all()
-        #     # 遍历所有行，将每一行的数据添加到列表中
-        #     data.extend([row.locator("td").all_text_contents()[:-1] for row in rows])
-        #     total_rows_count += len(rows)
-        #     # 若下一页按钮可用，则点击下一页按钮
-        #     self.click_next_button()
-        #     try:
-        #         expect(self.get_next_button()).to_be_enabled(timeout=2000)
-        #     except:
-        #         break
-
         return data, total_rows_count
 
     def get_table_data(self):
@@ -216,31 +152,21 @@ class Table:
         # 判断表格是否为空
         return self.get_first_page_button().count() == 0
 
-    def 获取表格中某行按钮(self, 关键字=None, 行号=None, 按钮名:str=None):
-        if 行号:
-            return self.get_table_rows().nth(行号-1).locator("button",has_text=按钮名)
-        elif 关键字:
-            return self.get_table_rows().filter(has_text=关键字).first.locator("button", has_text=按钮名)
+    def 获取表格中某行按钮(self, loc_行or行号or关键字: Union[Locator, int, str] = None, 按钮名:str=None):
+        if isinstance(loc_行or行号or关键字, Locator):
+            return loc_行or行号or关键字.locator("button", has_text=按钮名)
+        if isinstance(loc_行or行号or关键字, int):
+            return self.get_table_rows().nth(loc_行or行号or关键字).locator("button",has_text=按钮名)
+        elif isinstance(loc_行or行号or关键字, str):
+            return self.get_table_rows().filter(has_text=loc_行or行号or关键字).first.locator("button", has_text=按钮名)
 
         else:
             raise Exception("请输入关键字或行号")
 
-    def 点击表格中某行按钮(self, loc_行:Locator=None,关键字=None, 行号=None, 按钮名:str=None):
-        if loc_行 is not None:
-            loc_行.locator("button", has_text=按钮名).evaluate("(el) => el.click()")
-        else:
-            self.获取表格中某行按钮(关键字=关键字,行号=行号, 按钮名=按钮名).evaluate("(el) => el.click()")
+    def 点击表格中某行按钮(self, loc_行or行号or关键字: Union[Locator, int, str] = None, 按钮名:str=None):
+        self.获取表格中某行按钮(loc_行or行号or关键字=loc_行or行号or关键字, 按钮名=按钮名).evaluate("(el) => el.click()", timeout=3000)
 
     def loc_表格中每列内容完全等于筛选条件的行(self, 匹配条件:dict):
-        # res = self.get_table_rows()
-        #
-        # for key, value in 匹配条件.items():
-        #     idx = self.根据列名获取索引(key)
-        #     res = res.filter(has=self.get_table_rows().get_by_text(value,exact=True))
-        #     if res is None:
-        #         raise Exception(f"没有找到匹配的行，请检查筛选条件是否正确")
-        # return res
-
         # 获取表格所有行
         rows = self.get_table_rows()
 
@@ -252,8 +178,8 @@ class Table:
             # rows = rows.filter(
             #     has=rows.locator(f"td:nth-child({idx + 1})").get_by_text(expected_value, exact=True)
             # )
-
             rows = rows.filter(has=self.page.get_by_text(expected_value,exact=True))
+
             # 如果中间某一步没有匹配结果，提前结束
             if not rows.count():
                 raise Exception(f"未找到满足条件的行：{column_name} = {expected_value}")

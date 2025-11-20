@@ -1,34 +1,11 @@
-import re
-
-import pytest
-from joblib.testing import timeout
-from playwright.sync_api import sync_playwright, Playwright, Page, expect
-
-from module.BasePageNew import PageObject
-from module.base_query_page import BaseQueryPage
-import pymysql
-import allure
-import time
-
-from pages.login_page_h5 import LoginPageH5
-from pages.login_page_pc import LoginPagePc
-from module.base_query_page_new import BaseQueryPage
-
-# 导入用户配置信息，以字典形式保存
-from user_data import USERS_BY_ROLE
-
-# 处理页面水合现象需要使用的包
 import hashlib
 import shutil
 import os
 import sys
 import time
 from pathlib import Path
-from utils.GetPath import get_path
+from utils.GetPath import get_path, get_sub_url
 from filelock import FileLock
-from playwright._impl._locator import Locator as LocatorImpl
-from playwright._impl._sync_base import mapping
-from playwright.sync_api._generated import Locator as _Locator
 from typing import (
     Any,
     Dict,
@@ -47,549 +24,184 @@ from playwright.sync_api import (
     expect,
     BrowserType,
 )
-from pytest_playwright.pytest_playwright import CreateContextCallback, _build_artifact_test_folder
+from pytest_playwright.pytest_playwright import CreateContextCallback
 from slugify import slugify
 import tempfile
 import allure
 import re
 from utils.globalMap import GlobalMap
+from playwright._impl._locator import Locator as LocatorImpl
+from playwright._impl._sync_base import mapping
+from playwright.sync_api._generated import Locator as _Locator
+
 import json
 from allure import step
+
 api_Count = []
 time_out = 0
 
-# 存放角色到page的映射
-role_to_page = {}
 
-"""存放UI自动化测试过程中用到的测试夹具"""
-# 定义Playwright fixture，用于初始化Playwright实例
+# @pytest.fixture()
+# def hello_world():
+#     print("hello")
+#     yield
+#     print("world")
+#
+#
+# @pytest.fixture
+# def page(context: BrowserContext) -> Page:
+#     print("this is my page")
+#     return context.new_page()
+# sys.stdout = sys.stderr
+
+# @pytest.fixture(scope="session", autouse=True)
+# def test_init(base_url):
+#     global_map = GlobalMap()
+#     global_map.set("baseurl", base_url)
+#     env = re.search("(https://)(.*)(.ezone.work)", base_url).group(2)
+#     global_map.set("env", env)
+
+@pytest.fixture(scope="session", autouse=True)
+def test_init(base_url):
+    global_map = GlobalMap()
+    global_map.set("baseurl", base_url)
+    # env = base_url
+    if base_url == "http://114.96.83.242:8087":
+        env = "test"
+    # env = re.search("(http://)(.*)(/login)", base_url).group(2)
+    global_map.set("env", env)
+
+
 @pytest.fixture(scope="session")
-def playwright() -> Playwright:
-    with sync_playwright() as p:
-        yield p
+def browser_context_args(
+        pytestconfig: Any,
+        playwright: Playwright,
+        device: Optional[str],
+        base_url: Optional[str],
+        # _pw_artifacts_folder: tempfile.TemporaryDirectory,
+) -> Dict:
+    width, height = pytestconfig.getoption("--viewport")
+    context_args = {}
+    if device:
+        context_args.update(playwright.devices[device])
+    if base_url:
+        context_args["base_url"] = base_url
+    # video_option = pytestconfig.getoption("--video")
+    # capture_video = video_option in ["on", "retain-on-failure"]
+    # if capture_video:
+    #     context_args["record_video_dir"] = _pw_artifacts_folder.name
 
-
-# 设置浏览器分辨率
-@pytest.fixture(scope="session")
-def browser_context_args(browser_context_args):
     return {
-        **browser_context_args,
+        **context_args,
         "viewport": {
-            "width": 600,
-            "height": 800
+            "width": width,
+            "height": height,
         },
-        "record_video_dir": {
-            "width": 1440,
-            "height": 900
+        "record_video_size": {
+            "width": width,
+            "height": height,
         },
     }
 
-# 测试夹具-获取已经打开的浏览器
-@pytest.fixture(scope="session")
-def browser_opened(playwright):
-    # browser = playwright.chromium.connect_over_cdp("http://localhost:9222")
-    # 通过ip和端口连接到已经打开的chromium浏览器
-    browser = playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
-    yield browser
 
-
-# 测试夹具-打开新的浏览器
-@pytest.fixture(scope="session")
-def browser(playwright):
-    # 通过ip和端口连接到已经打开的chromium浏览器
-    # browser = playwright.chromium.launch(headless=False,args=['--start-maximized'])  # 启动浏览器
-    browser = playwright.chromium.launch(
-        # slow_mo=1000, # 全局设置速度
-        headless=False,
-        # args=["--window-size=1920,1080"]  # 设置窗口大小
-    )
-    yield browser
-    browser.close()  # 关闭浏览器
-
-
-# 测试夹具-启动新的浏览器
-# 测试夹具 - 使用 browser fixture 创建 context 并应用 iPhone 13 设备配置
-@pytest.fixture(scope="package")
-def page_h5(playwright, browser):
-    # 获取 iPhone 13 设备参数
-    iphone_13 = playwright.devices['iPhone 13']
-    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
-    context = browser.new_context(**iphone_13)
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
-    yield page
-    page.close()  # 关闭页面
-    context.close()  # 关闭上下文
-
-
-@pytest.fixture(scope="package")
-def page_pc(browser):
-    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
-    # context = browser.new_context(no_viewport=True)
-    context = browser.new_context()
-    page = context.new_page()  # 打开新页面
-    yield page
-    page.close()  # 关闭页面
-    context.close()  # 关闭上下文
-
-
-@pytest.fixture(scope="package")
-def page_h5_居民(playwright, browser):
-    # 获取 iPhone 13 设备参数
-    iphone_13 = playwright.devices['iPhone 13']
-    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
-    context = browser.new_context(**iphone_13)
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPageH5(page)
-    login_page.goto()
-    login_page.同意登录()
-    login_page.登录(USERS_BY_ROLE['居民']['phone_number'], '22', '202208')
-    role_to_page['居民'] = page
-    yield page
-    page.close()  # 关闭页面
-    context.close()  # 关闭上下文
-
-
-@pytest.fixture(scope="package")
-def page_h5_一级网格员(playwright, browser):
-    # 获取 iPhone 13 设备参数
-    iphone_13 = playwright.devices['iPhone 13']
-    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
-    context = browser.new_context(**iphone_13)
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPageH5(page)
-    login_page.goto()
-    login_page.同意登录()
-    login_page.登录(USERS_BY_ROLE['一级网格员_H5']['phone_number'], '22', '202208')
-    role_to_page['一级网格员_H5'] = page
-    yield page
-    page.close()  # 关闭页面
-    context.close()  # 关闭上下文
-
-
-@pytest.fixture(scope="package")
-def page_h5_物业管理员(playwright, browser):
-    # 获取 iPhone 13 设备参数
-    iphone_13 = playwright.devices['iPhone 13']
-    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
-    context = browser.new_context(**iphone_13)
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPageH5(page)
-    login_page.goto()
-    login_page.同意登录()
-    login_page.登录(USERS_BY_ROLE['物业管理员_H5']['phone_number'], '22', '202208')
-    role_to_page['物业管理员_H5'] = page
-    yield page
-    page.close()  # 关闭页面
-    context.close()  # 关闭上下文
-
-
-@pytest.fixture(scope="package")
-def page_h5_三级网格员(playwright, browser):
-    # 获取 iPhone 13 设备参数
-    iphone_13 = playwright.devices['iPhone 13']
-    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
-    context = browser.new_context(**iphone_13)
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPageH5(page)
-    login_page.goto()
-    login_page.同意登录()
-    login_page.登录(USERS_BY_ROLE['三级网格员_H5']['phone_number'], '22', '202208')
-    role_to_page['三级网格员_H5'] = page
-    yield page
-    page.close()  # 关闭页面
-    context.close()  # 关闭上下文
-
-
-@pytest.fixture(scope="package")
-def page_h5_二级网格员(playwright, browser):
-    # 获取 iPhone 13 设备参数
-    iphone_13 = playwright.devices['iPhone 13']
-    # 使用传入的 browser 实例创建一个新的 context，并应用 iPhone 13 的设备参数
-    context = browser.new_context(**iphone_13)
-    page = context.new_page()  # 打开新页面
-    page.set_default_timeout(10000)  # 设置全局默认超时时间为 10 秒
-    login_page = LoginPageH5(page)
-    login_page.goto()
-    login_page.同意登录()
-    login_page.登录(USERS_BY_ROLE['二级网格员_H5']['phone_number'], '22', '202208')
-    role_to_page['二级网格员_H5'] = page
-    yield page
-    page.close()  # 关闭页面
-    context.close()  # 关闭上下文
-
-
-# @pytest.fixture(scope="module")
-# def page_pc_物业管理员1(browser):
-#     context = browser.new_context()
-#     page = context.new_page()  # 打开新页面
-#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-#     login_page = LoginPagePc(page)
-#     login_page.goto()
-#     login_page.登录(USERS_BY_ROLE['物业管理员1']['username'], USERS_BY_ROLE['物业管理员1']['password'], '202208')
-#     login_page.进入系统()
-#     # 登录后跳转到事业管理页面
-#     query_page = BaseQueryPage(page)
-#     query_page.跳转到某菜单("物业服务", "事件管理")
-#     role_to_page['物业管理员1'] = page
-#     yield page
-#     page.close()
-#     context.close()
-#
-#
-# @pytest.fixture(scope="module")
-# def page_pc_物业管理员2(browser):
-#     context = browser.new_context()
-#     page = context.new_page()  # 打开新页面
-#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-#     login_page = LoginPagePc(page)
-#     login_page.goto()
-#     login_page.登录(USERS_BY_ROLE['物业管理员2']['username'], USERS_BY_ROLE['物业管理员2']['password'], '202208')
-#     login_page.进入系统()
-#     # 登录后跳转到事业管理页面
-#     query_page = BaseQueryPage(page)
-#     query_page.跳转到某菜单("物业服务", "事件管理")
-#     role_to_page['物业管理员2'] = page
-#     yield page
-#     page.close()
-#     context.close()
-#
-#
-# @pytest.fixture(scope="module")
-# def page_pc_物业工作人员(browser):
-#     context = browser.new_context()
-#     page = context.new_page()  # 打开新页面
-#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-#     login_page = LoginPagePc(page)
-#     login_page.goto()
-#     login_page.登录(USERS_BY_ROLE['物业工作人员']['username'], USERS_BY_ROLE['物业工作人员']['password'], '202208')
-#     login_page.进入系统()
-#     # 登录后跳转到事业管理页面
-#     query_page = BaseQueryPage(page)
-#     query_page.跳转到某菜单("物业服务", "事件管理")
-#     role_to_page['物业工作人员'] = page
-#     yield page
-#     page.close()
-#     context.close()
-#
-#
-# @pytest.fixture(scope="module")
-# def page_pc_三级网格员(browser):
-#     context = browser.new_context()
-#     page = context.new_page()  # 打开新页面
-#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-#     login_page = LoginPagePc(page)
-#     login_page.goto()
-#     login_page.登录(USERS_BY_ROLE['三级网格员']['username'], USERS_BY_ROLE['三级网格员']['password'], '202208')
-#     login_page.进入系统()
-#     # 登录后跳转到事业管理页面
-#     query_page = BaseQueryPage(page)
-#     # query_page.跳转到某菜单("网格管理", "事件管理")
-#     query_page.跳转到某菜单("网格管理", "三级网格管理/居民上报")
-#
-#     role_to_page['三级网格员'] = page
-#     yield page
-#     page.close()
-#     context.close()
-#
-#
-# @pytest.fixture(scope="module")
-# def page_pc_二级网格员(browser):
-#     context = browser.new_context()
-#     page = context.new_page()  # 打开新页面
-#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-#     login_page = LoginPagePc(page)
-#     login_page.goto()
-#     login_page.登录(USERS_BY_ROLE['二级网格员']['username'], USERS_BY_ROLE['二级网格员']['password'], '202208')
-#     login_page.进入系统()
-#     # 登录后跳转到事业管理页面
-#     query_page = BaseQueryPage(page)
-#     query_page.跳转到某菜单("网格管理", "事件管理")
-#     role_to_page['二级网格员'] = page
-#     yield page
-#     page.close()
-#     context.close()
-#
-#
-# @pytest.fixture(scope="module")
-# def page_pc_一级网格员(browser):
-#     context = browser.new_context()
-#     page = context.new_page()  # 打开新页面
-#     page.set_default_timeout(5000)  # 设置全局默认超时时间为 10 秒
-#     login_page = LoginPagePc(page)
-#     login_page.goto()
-#     login_page.登录(USERS_BY_ROLE['一级网格员']['username'], USERS_BY_ROLE['一级网格员']['password'], '202208')
-#     login_page.进入系统()
-#     # 登录后跳转到事业管理页面
-#     query_page = BaseQueryPage(page)
-#     query_page.跳转到某菜单("网格管理", "事件管理")
-#     role_to_page['一级网格员'] = page
-#     yield page
-#     page.close()
-#     context.close()
-
-# # 定义需要创建页面夹具的物业相关角色
-# PROPERTY_ROLES = ['物业管理员1', '物业管理员2', '物业工作人员']
-# # 定义需要创建页面夹具的网格员角色
-# GRID_ROLES = ['三级网格员', '二级网格员', '一级网格员']
-#
-#
-# @pytest.fixture(scope="module")
-# def page_pc_by_roles(request, browser):
-#     """根据角色列表参数创建多个页面的夹具，会自动跳转到相应菜单"""
-#     roles = request.param if isinstance(request.param, list) else [request.param]
-#     pages_dict = {}
-#     contexts = []
-#
-#     for role in roles:
-#         context = browser.new_context()
-#         contexts.append(context)
-#         page = context.new_page()
-#         page.set_default_timeout(5000)
-#         login_page = LoginPagePc(page)
-#         login_page.goto()
-#         login_page.登录(USERS_BY_ROLE[role]['username'], USERS_BY_ROLE[role]['password'], '202208')
-#         login_page.进入系统()
-#
-#         query_page = BaseQueryPage(page)
-#         # 根据角色类型跳转到相应的菜单
-#         if role in PROPERTY_ROLES:
-#             query_page.跳转到某菜单("物业服务", "事件管理")
-#         elif role == '三级网格员':
-#             query_page.跳转到某菜单("网格管理", "三级网格管理/居民上报")
-#         else:
-#             # 适用于一级、二级网格员
-#             query_page.跳转到某菜单("网格管理", "事件管理")
-#
-#         role_to_page[role] = page
-#         pages_dict[role] = page
-#
-#     yield pages_dict
-#
-#     # 清理资源
-#     for page in pages_dict.values():
-#         page.close()
-#     for context in contexts:
-#         context.close()
-
-import re
-import time
-
-import allure
-import pytest
-from playwright.sync_api import expect, Page, sync_playwright
-
-from base_case import BaseCase
-from module.base_query_page_new import BaseQueryPage
-from pages.login_page_pc import LoginPagePc
-from pages.pages_h5.上报物业 import PageReportProperty
-from pages.pages_h5.首页 import PageHome
-from pages.网格管理.三级网格管理.居民上报.居民上报 import PageResidentsReport
-from pages.网格管理.事件管理 import PageIncidentManage
-from user_data import USERS_BY_ROLE
-
-# 定义需要创建页面夹具的物业相关角色
-PROPERTY_ROLES = ['物业管理员1', '物业管理员2', '物业工作人员']
-# 定义需要创建页面夹具的网格员角色
-GRID_ROLES = ['三级网格员', '二级网格员', '一级网格员']
-
-# 存放角色到page的映射
-role_to_page = {}
-
-# 创建一个全局变量来存储复用的页面
-_shared_pages_dict = None
-_shared_contexts = None
-_browser_instance = None
-
-
-@pytest.fixture(scope="session")
-def page_pc_by_roles_shared(request, browser):
-    """根据角色列表参数创建多个页面的夹具，会自动跳转到相应菜单，并在测试间复用"""
-    global _shared_pages_dict, _shared_contexts, _browser_instance
-
-    # 如果已经有共享页面且浏览器实例相同，则直接返回
-    if _shared_pages_dict is not None and _browser_instance is browser:
-        yield _shared_pages_dict
-        return
-
-    # 否则创建新的共享页面
-    # 收集所有测试用例中需要的角色
-    all_roles = set()
-    for mark in request.node.iter_markers("parametrize"):
-        if "page_pc_by_roles" in str(mark.args):
-            for param in mark.args[1]:
-                if isinstance(param[0], list):
-                    all_roles.update(param[0])
-                else:
-                    all_roles.add(param[0])
-
-    pages_dict = {}
-    contexts = []
-
-    for role in all_roles:
-        context = browser.new_context()
-        contexts.append(context)
-        page = context.new_page()
-        page.set_default_timeout(5000)
-        login_page = LoginPagePc(page)
-        login_page.goto()
-        login_page.登录(USERS_BY_ROLE[role]['username'], USERS_BY_ROLE[role]['password'], '202208')
-        login_page.进入系统()
-
-        query_page = BaseQueryPage(page)
-        # 根据角色类型跳转到相应的菜单
-        if role in PROPERTY_ROLES:
-            query_page.跳转到某菜单("物业服务", "事件管理")
-        elif role == '三级网格员':
-            query_page.跳转到某菜单("网格管理", "三级网格管理/居民上报")
-        else:
-            # 适用于一级、二级网格员
-            query_page.跳转到某菜单("网格管理", "事件管理")
-
-        role_to_page[role] = page
-        pages_dict[role] = page
-
-    # 保存共享资源
-    _shared_pages_dict = pages_dict
-    _shared_contexts = contexts
-    _browser_instance = browser
-
-    yield pages_dict
-
-    # 清理资源（只在会话结束时）
-    if _shared_pages_dict is not None:
-        for page in _shared_pages_dict.values():
-            try:
-                page.close()
-            except:
-                pass
-        for context in _shared_contexts:
-            try:
-                context.close()
-            except:
-                pass
-        _shared_pages_dict = None
-        _shared_contexts = None
-        _browser_instance = None
-
-
-@pytest.fixture(scope="function")
-def page_pc_by_roles(request, browser):
-    """根据测试用例参数返回需要的页面子集"""
-    global _shared_pages_dict
-
-    # 确保共享页面已创建
-    if _shared_pages_dict is None:
-        # 如果还没有共享页面，创建一个临时的
-        roles = request.param if isinstance(request.param, list) else [request.param]
-        pages_dict = {}
-        contexts = []
-
-        for role in roles:
-            context = browser.new_context()
-            contexts.append(context)
-            page = context.new_page()
-            page.set_default_timeout(5000)
-            login_page = LoginPagePc(page)
-            login_page.goto()
-            login_page.登录(USERS_BY_ROLE[role]['username'], USERS_BY_ROLE[role]['password'], '202208')
-            login_page.进入系统()
-
-            query_page = BaseQueryPage(page)
-            # 根据角色类型跳转到相应的菜单
-            if role in PROPERTY_ROLES:
-                query_page.跳转到某菜单("物业服务", "事件管理")
-            elif role == '三级网格员':
-                query_page.跳转到某菜单("网格管理", "三级网格管理/居民上报")
-            else:
-                # 适用于一级、二级网格员
-                query_page.跳转到某菜单("网格管理", "事件管理")
-
-            role_to_page[role] = page
-            pages_dict[role] = page
-
-        yield pages_dict
-
-        # 清理临时资源
-        for page in pages_dict.values():
-            page.close()
-        for context in contexts:
-            context.close()
-    else:
-        # 从共享页面中返回需要的子集
-        roles = request.param if isinstance(request.param, list) else [request.param]
-        pages_dict = {role: _shared_pages_dict[role] for role in roles if role in _shared_pages_dict}
-        yield pages_dict
-
-
-@pytest.fixture(scope="function")
-def close_all_drawers(request):
-    """
-    在测试用例执行后关闭所有角色页面的抽屉
-    """
-    yield
-    # 获取所有已打开的页面对象
-    opened_pages = []
-
-    for name, value in request.node.funcargs.items():
-        if isinstance(value, Page):
-            opened_pages.append(value)
-
-    # 刷新所有已打开的页面
-    for page in opened_pages:
+def pytest_terminal_summary(config):
+    # 使用pytest-xdist时,最终任务完成删除ws-endpoint.json的逻辑
+    if not hasattr(config, "workerinput"):
         try:
-            page.reload()
+            os.remove(get_path(".temp/ws-endpoint.json"))
+            print(f"文件ws-endpoint.json已成功删除。")
+        except FileNotFoundError:
+            print(f"未找到文件ws-endpoint.json")
+        except PermissionError:
+            print(f"没有权限删除文件ws-endpoint.json")
         except Exception as e:
-            print(f"刷新页面失败: {e}")
+            print(f"删除文件ws-endpoint.json时出现错误: {e}")
 
 
-# ... rest of the file remains unchanged ...
+def pytest_addoption(parser: Any) -> None:
+    group = parser.getgroup("playwright", "Playwright")
+    group.addoption(
+        "--viewport",
+        action="store",
+        default=[1440, 900],
+        help="viewport size set",
+        type=int,
+        nargs=2,
+    )
+    group.addoption(
+        "--ui_timeout",
+        default=30_000,
+        help="locator timeout and expect timeout",
+    )
+    group.addoption(
+        "--rerun_strategy",
+        action="store",
+        default=None,
+        #  这里不使用nargs="*"是因为无限个args对参数的位置有要求,或者测试目标需要用参数指定
+        help="testcase rerun strategy set, eg: screenshot=retain-on-failure,video=retain-on-failure,tracing=retain-on-failure",
+    )
+    group.addoption(
+        "--allure_report_auto_open",
+        action="store",
+        default="off",
+        help="if finish test, allure report auto open, eg: /Users/liuyunlong/Desktop/pw-allure",
+    )
+    group.addoption(
+        "--wsendpoint",
+        type=str,
+        default="",
+        help="""
+        可以通过cdp启动或者使用'playwright launch-server --browser=chromium --config ws-config.json'来启动,
+        传入的参数举例: ws://192.168.3.46:33013/0867ca426dcfb6474c055e1c7035ec49,2;local,4
+        前半部分为ws地址,逗号后面的2是ws支持的并发上限,多个ws用;分割,local代表本机执行
+        """,
+    )
+    group.addoption(
+        "--persistent",
+        default="off",
+        help="save and use local user data",
+        choices=["on", "off", "clear"],
+    )
+    group.addoption(
+        "--tempdir",
+        default="",
+        help="为默认的空时,使用系统临时文件夹,否则使用传过来的文件夹,在指定路径下新建文件夹pw_temp",
+    )
+    group.addoption(
+        "--cdp",
+        default="",
+        help="""连接cdp,支持Chromium的浏览器,填写连接cdp的endpoint_url,可以通过http://localhost:9222/json/version获取,也可以直接填http://localhost:9222
+        浏览器启动方法:
+        macos:
+        /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+          --remote-debugging-port=9222 \
+          --user-data-dir="/tmp/chrome-dev" \
+          --no-first-run \
+          --no-default-browser-check
+        windows:
+        & 'C:\Program Files\Google\Chrome\Application\chrome.exe' `
+          --remote-debugging-port=9222 `
+          --user-data-dir="C:\temp\chrome-dev" `
+          --no-first-run `
+          --no-default-browser-check
+                """,
+    )
+    group.addoption(
+        "--chrome_path",
+        default=None,
+        help="本地浏览器的path,填写后使用本地浏览器,支持chrome核心的浏览器(包括edge)",
+    )
 
 
-# 监听页面的请求
-# def requests(request):
-#     """监听请求"""
-#     if request.url == "cccc":
-#         return
-#     print("============================================")
-#     print(f"请求：{request.url}")
-#     print(f"请求头：{request.headers}")
-#     print("============================================")
-def slow_response(route, request):
-    # 延迟请求处理，模拟高延迟网络
-    print("请求开始处理...")
-    time.sleep(1)  # 5000ms 延迟
-
-    # 可选：修改响应体大小，模拟低带宽
-    route.continue_()
-    # 如果你需要截获并修改响应内容：
-    # response = route.fetch()
-    # body = response.json()
-    # 自定义返回数据，例如裁剪大文件等
-    # route.fulfill(response=response, json=body)
+@pytest.fixture(scope="session")
+def ui_timeout(pytestconfig):
+    timeout = float(pytestconfig.getoption("--ui_timeout"))
+    expect.set_options(timeout=timeout)
+    global time_out
+    time_out = float(pytestconfig.getoption("--ui_timeout"))
+    return timeout
 
 
-@pytest.fixture(scope="module")
-def 浏览器已打开的页面(browser_opened):
-    # 若浏览器已打开，则直接使用已打开的浏览器，否则创建一个新的浏览器实例
-    context = browser_opened.contexts[0] if browser_opened.contexts else browser_opened.new_context()
-    # 模拟弱网环境
-    # 拦截所有请求，模拟网络延迟
-    # context.route(re.compile(r"https?://.*"), slow_response)
-    # 若该浏览器中有页面，则直接使用已打开的页面，否则创建一个新的页面
-    page = context.pages[0] if context.pages else context.new_page()
-    page.set_default_timeout(6000)  # 设置默认超时时间为 4000 毫秒
-
-    # page.on("response", requests)
-
-    yield page
-
-
-# 用例运行失败自动截图
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item):
     outcome = yield
@@ -600,107 +212,237 @@ def pytest_runtest_makereport(item):
                 for page in context.pages:
                     if page.is_closed():
                         continue
-                    # 开始截图并统计耗时
-                    try:
-                        screenshot_start = time.time()
-                        bytes_png = page.screenshot(timeout=10000, full_page=True)
-                        screenshot_end = time.time()
-                        duration_ms = (screenshot_end - screenshot_start) * 1000
-                        print(f"截图成功，耗时: {duration_ms:.2f} ms")
-
-                        # 将截图添加到 Allure 报告
-                        allure.attach(
-                            bytes_png,
-                            name=f"失败截图 - {page.title()}",
-                            attachment_type=allure.attachment_type.PNG
-                        )
-                    except Exception as e:
-                        # 截图失败时记录异常，并附加错误信息到报告
-                        error_msg = f"❌ 页面 '{page.title()}' 截图失败: {str(e)}"
-                        allure.attach(
-                            error_msg,
-                            name="截图失败原因",
-                            attachment_type=allure.attachment_type.TEXT
-                        )
-                        print(error_msg)
-                    #
-                    # bytes_png = page.screenshot(timeout=10000, full_page=True)
-                    # allure.attach(bytes_png, f"失败截图---{page.title()}")
-
-        except Exception as e:
-            # 其他错误处理（如 browser 不存在）
-            error_msg = f"🚨 截图失败（全局）: {str(e)}"
-            allure.attach(
-                error_msg,
-                name="截图失败原因（全局）",
-                attachment_type=allure.attachment_type.TEXT
-            )
-            print(error_msg)
+                    bytes_png = page.screenshot(timeout=5000, full_page=True)
+                    allure.attach(bytes_png, f"失败截图---{page.title()}")
+        except:
             ...
 
 
-# 返回数据库连接，给所有的测试用例公用，所有的测试用例都执行完之后，自动关闭数据库连接
-@pytest.fixture(scope="session")
-def db_connection():
-    # 创建数据库连接
-    # db_config = {
-    #     "host": "114.96.83.242",
-    #     "port": "8306",
-    #     "user": "root",
-    #     "password": "Dxjc@2020",
-    #     "database": "chinaictc_sc_common_pre"
-    # }
-    # connection = mysql.connector.connect(**db_config)
-    connection = pymysql.connect(
-        host="114.96.83.242",
-        user="root",
-        port=8306,
-        password="Dxjc@2020",
-        database="chinaictc_sc_common_pre",
-        cursorclass=pymysql.cursors.DictCursor  # 如果你需要字典格式结果
+@pytest.fixture()
+def _artifacts_recorder(
+        request: pytest.FixtureRequest,
+        playwright: Playwright,
+        pytestconfig: Any,
+        _pw_artifacts_folder: tempfile.TemporaryDirectory,
+) -> Generator["ArtifactsRecorder", None, None]:
+    artifacts_recorder = ArtifactsRecorder(
+        pytestconfig, request, playwright, _pw_artifacts_folder
     )
-    yield connection  # 返回连接对象
-    # 测试结束后关闭连接
-    connection.close()
+    yield artifacts_recorder
+    # If request.node is missing rep_call, then some error happened during execution
+    # that prevented teardown, but should still be counted as a failure
+    failed = request.node.rep_call.failed if hasattr(request.node, "rep_call") else True
+    artifacts_recorder.did_finish_test(failed)
 
 
-@pytest.fixture(scope="module")
-def 查询页面(浏览器已打开的页面):
-    查询页面 = BaseQueryPage(浏览器已打开的页面)
-    yield 查询页面
+def truncate_file_name(file_name: str) -> str:
+    if len(file_name) < 256:
+        return file_name
+    return f"{file_name[:100]}-{hashlib.sha256(file_name.encode()).hexdigest()[:7]}-{file_name[-100:]}"
 
 
-@pytest.fixture(scope="function")
-def 后置操作_刷新页面(浏览器已打开的页面):
-    yield 浏览器已打开的页面
-    # 刷新
-    浏览器已打开的页面.reload()
-    # 等待网络请求完成
-    expect(浏览器已打开的页面.get_by_text("系统加载中")).not_to_be_visible(timeout=5000)
+def _build_artifact_test_folder(
+        pytestconfig: Any, request: pytest.FixtureRequest, folder_or_file_name: str
+) -> str:
+    output_dir = pytestconfig.getoption("--output")
+    return os.path.join(
+        output_dir,
+        #  修改为request.node.name,以便支持中文用例名称,所有的request.node.name都是这个目的
+        truncate_file_name(request.node.name),
+        truncate_file_name(folder_or_file_name),
+    )
 
 
-@pytest.fixture(scope="function")
-def 后置操作_点击返回按钮(浏览器已打开的页面):
-    yield 浏览器已打开的页面
-    浏览器已打开的页面.locator("button").filter(has_text="返回").click()
+@pytest.fixture
+def new_context(
+        browser_context_args: Dict,
+        _artifacts_recorder: "ArtifactsRecorder",
+        request: pytest.FixtureRequest,
+        ui_timeout: float,
+        pytestconfig: Any,
+        _pw_artifacts_folder: tempfile.TemporaryDirectory,
+        browser_type: BrowserType,
+        browser_type_launch_args
+) -> Generator[CreateContextCallback, None, None]:
+    browser_context_args = browser_context_args.copy()
+    context_args_marker = next(request.node.iter_markers("browser_context_args"), None)
+    additional_context_args = context_args_marker.kwargs if context_args_marker else {}
+    browser_context_args.update(additional_context_args)
+    contexts: List[BrowserContext] = []
 
+    def _new_context(**kwargs: Any) -> BrowserContext:
+        #  复制browser_context_args,防止污染参数
+        browser_context_args_copy = browser_context_args.copy()
+        #  获取重试的log策略并转成列表
+        _rerun_strategy = pytestconfig.getoption("--rerun_strategy").split(",")
+        #  获取重试次数,此处为2则为重试2次,加上第1次,一共跑3次
+        _reruns = pytestconfig.getoption("--reruns")
+        video_option = pytestconfig.getoption("--video")
+        global_map = GlobalMap()
+        base_url = global_map.get("baseurl")
+        #  重试log策略(默认None)和重试次数(默认0)参数必须都有值
+        if _rerun_strategy and _reruns:
+            #  使用空字符串去补足轮次和策略的对应关系:
+            if _reruns + 1 > len(_rerun_strategy):
+                _init_rerun_strategy = [""] * (1 + _reruns - len(_rerun_strategy)) + _rerun_strategy
+            #  使用切片来处理多余的策略(如果相等,则切片是本身),可根据自身设计改成从后往前切
+            else:
+                _init_rerun_strategy = _rerun_strategy[:_reruns + 1]
+            #  这里减1是因为request.node.execution_count从1开始,我们取列表下标从0开始
+            rerun_round = request.node.execution_count - 1
+            _round_rerun_strategy = _init_rerun_strategy[rerun_round]
 
-@pytest.fixture(scope="function")
-def 后置操作_重置查询条件(查询页面):
-    yield 查询页面
-    # 执行完用例之后，点击重置按钮，清空查询条件
-    查询页面.click_reset_btn()
-    # expect(查询页面.page.get_by_text("加载中")).not_to_be_visible(timeout=5000)
-    expect(查询页面.page.locator(".el-loading-spinner").locator("visible=true")).not_to_be_visible(timeout=5000)
-    # 等待网络请求完成
-    # 查询页面.page.wait_for_load_state("networkidle")
+            #  这里先判断是否有log策略
+            if _round_rerun_strategy:
+                if "video" in _round_rerun_strategy:
+                    video_option = _round_rerun_strategy.split("=")[-1]
+                else:
+                    video_option = "off"
+            else:
+                video_option = "off"
+        #  这里只判断了video,是因为创建context时必须设置record_video_dir后才开始主动录屏
+        capture_video = video_option in ["on", "retain-on-failure"]
+        browser_context_args_copy.update(kwargs)
+        if capture_video:
+            video_option_dict = {"record_video_dir": _pw_artifacts_folder.name}
+            #  字典的update可以直接传字典,也可以解包,解包相当于kwargs
+            browser_context_args_copy.update(video_option_dict)
+        wsendpoint_option = pytestconfig.getoption("--wsendpoint")
+        persistent_option = pytestconfig.getoption("--persistent")
+        cdp_option = pytestconfig.getoption("--cdp")
+        chrome_path_option = pytestconfig.getoption("--chrome_path")
+        if pytestconfig.getoption("--tempdir"):
+            tempdir = os.path.join(pytestconfig.getoption("--tempdir"), "pw_temp")
+        else:
+            tempdir = tempfile.gettempdir()
+        if wsendpoint_option:
+            wsendpoint_option = wsendpoint_option.split(";")
+            print("start with ws-endpoint context")
 
+            # ws并发轮询处理函数:
+            def wsendpoint_load() -> BrowserContext | None:
+                while True:
+                    # 等待有可用空闲连接:
+                    with open(get_path(".temp/ws-endpoint.json"), "r") as ws_file:
+                        ws_dict_read = json.loads(ws_file.read())  # type:dict
+                    min_ratio = 1
+                    min_key = None
+                    if ws_dict_read:
+                        if ws_dict_read:
+                            for key, value in ws_dict_read.items():
+                                ratio = int(value[0]) / int(value[1])
+                                if ratio <= min_ratio:
+                                    min_ratio = ratio
+                                    min_key = key
+                        if min_ratio == 1:
+                            print(f"当前没有可用的连接,等待三秒后重试")
+                            time.sleep(3)
+                            continue
+                        # 使用本地执行的逻辑:
+                        if min_key == "local":
+                            print("使用本地浏览器创建上下文")
+                            ws_context = browser_type.launch(**browser_type_launch_args, executable_path=chrome_path_option).new_context(
+                                **{**browser_context_args})
+                            ws_dict_read[min_key][0] = int(ws_dict_read[min_key][0]) + 1
+                            with open(get_path(".temp/ws-endpoint.json"), "w") as ws_file_w:
+                                ws_file_w.write(json.dumps(ws_dict_read))
+                            # 给生成的context添加受保护属性_ws,为了后面关闭时,判断是否需要做处理
+                            ws_context._ws = "local"
+                            return ws_context
+                        # 使用ws-endpoint连接的逻辑:
+                        else:
+                            for _ in range(3):
+                                # 使用try去测试ws-endpoint是否可用:
+                                try:
+                                    # 去除connect不支持的参数:
+                                    ws_context = browser_type.connect(
+                                        ws_endpoint=min_key, timeout=10_000, **{k: v for k, v in browser_type_launch_args.items() if k in ["slow_mo", "headers", "expose_network"]}
+                                    ).new_context(**{**browser_context_args})
+                                    print(f"连接ws-endpoint:{min_key}成功")
+                                    ws_dict_read[min_key][0] = int(ws_dict_read[min_key][0]) + 1
+                                    with open(get_path(".temp/ws-endpoint.json"), "w") as ws_file_w:
+                                        ws_file_w.write(json.dumps(ws_dict_read))
+                                    # 给生成的context添加受保护属性_ws,为了后面关闭时,判断是否需要做处理
+                                    ws_context._ws = min_key
+                                    return ws_context
+                                # 防止硬塞入storage_state文件,文件路径不对时,删除无辜的ws-endpoint服务
+                                except FileNotFoundError as e:
+                                    raise e
+                                except:
+                                    if _ == 2:
+                                        print(f"连接ws-endpoint:{min_key}失败,已使其失效")
+                                        ws_dict_read.pop(min_key)
+                                        with open(get_path(".temp/ws-endpoint.json"), "w") as ws_file_w:
+                                            ws_file_w.write(json.dumps(ws_dict_read))
+                    else:
+                        pytest.fail("已经没有可用的ws-endpoint,用例失败")
 
-@pytest.fixture(scope="function")
-def 后置操作_关闭抽屉(浏览器已打开的页面):
-    yield 浏览器已打开的页面
-    当前页面 = BaseQueryPage(浏览器已打开的页面)
-    当前页面.关闭抽屉()
+            # 这里加锁是为了原子化,处理不会冲突,分配是可以加锁的
+            with FileLock(get_path(".temp/ws-endpoint.lock")):
+                if os.path.exists(get_path(".temp/ws-endpoint.json")):
+                    my_context = wsendpoint_load()
+                else:
+                    # 新建ws-endpoint.json的逻辑
+                    with open(get_path(".temp/ws-endpoint.json"), "w") as new_ws_file:
+                        ws_dict = {}
+                        for ws_info in wsendpoint_option:  # type:str
+                            ws, limit = ws_info.split(",")
+                            ws_dict.update({ws: [0, limit]})
+                        new_ws_file.write(json.dumps(ws_dict))
+                    my_context = wsendpoint_load()
+        elif persistent_option != "off":
+            base_u = get_sub_url(base_url)
+            print("start with persistent context")
+            if persistent_option == "on":
+                print(f"user-data文件的地址是:{tempdir}/{base_u}/{request.node.name}")
+            if persistent_option == "clear":
+                shutil.rmtree(os.path.join(tempdir, base_u, request.node.name))
+                print(f"user-data文件{tempdir}/{base_u}/{request.node.name}已被清除")
+            my_context = browser_type.launch_persistent_context(
+                f"{tempdir}/{base_u}/{request.node.name}",
+                **{
+                    **browser_type_launch_args,
+                    **browser_context_args,
+                },
+            )
+            if len(my_context.pages):
+                for page in my_context.pages:
+                    page.close()
+        elif cdp_option:
+            print("start connect over cdp")
+            my_context = browser_type.connect_over_cdp(cdp_option, **{k: v for k, v in browser_type_launch_args.items() if k in ["slow_mo", "headers", "timeout"]}).new_context(**{**browser_context_args})
+            my_context._cdp = "cdp"
+        else:
+            my_context = browser_type.launch(**browser_type_launch_args, executable_path=chrome_path_option).new_context(**browser_context_args_copy)
+        my_context.set_default_timeout(ui_timeout)
+        my_context.set_default_navigation_timeout(ui_timeout * 2)
+        original_close = my_context.close
+
+        def _close_wrapper(*args: Any, **my_kwargs: Any) -> None:
+            contexts.remove(context)
+            # 如果有context._ws属性,说明是是通过wsendpoint创建的context:
+            try:
+                ws = context._ws
+                # 这里注意文件的读写的with是可以嵌套的:
+                with open(get_path(".temp/ws-endpoint.json"), "r") as ws_file_r:
+                    ws_dict_read = json.loads(ws_file_r.read())  # type:dict
+                    ws_dict_read[ws][0] = int(ws_dict_read[ws][0]) - 1
+                    with open(get_path(".temp/ws-endpoint.json"), "w") as ws_file_w:
+                        ws_file_w.write(json.dumps(ws_dict_read))  # type:dict
+            except:
+                pass
+            _artifacts_recorder.on_will_close_browser_context(my_context)
+            original_close(*args, **my_kwargs)
+
+        my_context.close = _close_wrapper
+        contexts.append(my_context)
+        _artifacts_recorder.on_did_create_browser_context(my_context)
+        return my_context
+
+    yield cast(CreateContextCallback, _new_context)
+    for context in contexts.copy():
+        context.close()
+
 
 class ArtifactsRecorder:
     def __init__(
@@ -720,7 +462,7 @@ class ArtifactsRecorder:
         self._traces: List[str] = []
         self._rerun_strategy = pytestconfig.getoption("--rerun_strategy").split(",")
         self._reruns = pytestconfig.getoption("--reruns")
-        #  这里逻辑了上面的一致,不赘述了
+        #  这里逻辑与上面的一致,不赘述了
         if self._rerun_strategy and self._reruns:
             if self._reruns + 1 >= len(self._rerun_strategy):
                 self._init_rerun_strategy = [""] * (1 + self._reruns - len(self._rerun_strategy)) + self._rerun_strategy
@@ -735,14 +477,17 @@ class ArtifactsRecorder:
                 self._screenshot_option = self._round_rerun_strategy.split("=")[-1]
             else:
                 self._screenshot_option = "off"
+
             if "video" in self._round_rerun_strategy:
                 self._video_option = self._round_rerun_strategy.split("=")[-1]
             else:
                 self._video_option = "off"
+
             if "tracing" in self._round_rerun_strategy:
                 self._tracing_option = self._round_rerun_strategy.split("=")[-1]
             else:
                 self._tracing_option = "off"
+
             self._capture_trace = self._tracing_option in ["on", "retain-on-failure"]
         else:
             #  没有重试log策略和重试次数,自然取原始的log策略
@@ -753,7 +498,14 @@ class ArtifactsRecorder:
 
     def did_finish_test(self, failed: bool) -> None:
         #  获取当前轮次并初始化一个字符串,给保存文件做前缀
-        round_prefix = f"round{self._request.node.execution_count}-"
+        # round_prefix = f"round{self._request.node.execution_count}-"
+        # 使用测试函数的name或其他可用属性作为替代
+        if hasattr(self._request.node, 'execution_count'):
+            round_prefix = f"round{self._request.node.execution_count}-"
+        else:
+            # 使用测试名称或其他标识符
+            round_prefix = f"round-{self._request.node.name}-"
+
         #  这里可以学习一下组合的布尔逻辑
         capture_screenshot = self._screenshot_option == "on" or (
                 failed and self._screenshot_option == "only-on-failure"
@@ -765,13 +517,15 @@ class ArtifactsRecorder:
                     self._pytestconfig,
                     self._request,
                     #  原始为 f"test-{human_readable_status}-{index + 1}.png",
+                    # f"{index + 1}-{human_readable_status}-{screenshot.split(os.sep)[-1]}.png",
+
                     f"{round_prefix}{index + 1}-{human_readable_status}-{screenshot.split(os.sep)[-1]}.png",
                 )
                 #  这里这种写法注意下,如果自己需要放log,用这个方式创建很好
                 os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
                 shutil.move(screenshot, screenshot_path)
                 # allure附加图片文件的方法
-                allure.attach.file(screenshot_path, f"{round_prefix}{index + 1}-{human_readable_status}-{screenshot.split(os.sep)[-1]}.png")
+                # allure.attach.file(screenshot_path, f"{round_prefix}{index + 1}-{human_readable_status}-{screenshot.split(os.sep)[-1]}.png")
         else:
             for screenshot in self._screenshots:
                 os.remove(screenshot)
@@ -781,6 +535,8 @@ class ArtifactsRecorder:
         ):
             for index, trace in enumerate(self._traces):
                 trace_file_name = (
+                    # f"trace.zip" if len(self._traces) == 1 else f"trace-{index + 1}.zip"
+
                     f"{round_prefix}trace.zip" if len(self._traces) == 1 else f"{round_prefix}trace-{index + 1}.zip"
                 )
                 trace_path = _build_artifact_test_folder(
@@ -804,8 +560,12 @@ class ArtifactsRecorder:
                     continue
                 try:
                     video_file_name = (
+                        # f"video.webm"
                         f"{round_prefix}video.webm"
+
                         if len(self._all_pages) == 1
+                        # else f"video-{index + 1}.webm"
+
                         else f"{round_prefix}video-{index + 1}.webm"
                     )
                     video.save_as(
@@ -904,6 +664,34 @@ def create_guid() -> str:
     return hashlib.sha256(os.urandom(16)).hexdigest()
 
 
+@pytest.fixture
+def page(context: BrowserContext) -> Page:
+    try:
+        cdp = context._cdp
+        return context.browser.contexts[0].pages[0]
+    except:
+        return context.new_page()
+
+# @pytest.hookimpl(trylast=True)
+# def pytest_sessionfinish(session):
+#     allure_report_auto_open_config = session.config.getoption("--allure_report_auto_open")
+#     if session.config.getoption("--allure_report_auto_open") != "off":
+#         if sys.platform != "linux":
+#             import subprocess
+#             allure_report_dir = allure_report_auto_open_config
+#             # 尝试关闭可能已经在运行的 Allure 服务
+#             try:
+#                 if sys.platform == 'darwin':  # macOS
+#                     subprocess.call("pkill -f 'allure'", shell=True)
+#                 elif sys.platform == 'win32':  # Windows
+#                     command = "taskkill /F /IM allure.exe /T"
+#                     subprocess.call(command, shell=True)
+#             except Exception as e:
+#                 print(e)
+#             allure_command = f'allure serve {allure_report_dir}'
+#             subprocess.Popen(allure_command, shell=True)
+
+
 class Locator(_Locator):
     __last_step = None
 
@@ -967,7 +755,7 @@ class Locator(_Locator):
                                             }}''')
                                     else:
                                         # 在这里可以添加自己需要等待或者处理的动作,比如等待转圈,关闭弹窗等等(当然,弹窗最好单独做个监听)
-                                        self.page.locator("//*[contains(@class, 'el-loading-spinner')]").locator("visible=true").last.wait_for(state="hidden", timeout=30_000)
+                                        self.page.locator("//*[contains(@class, 'spin-dot-spin')]").locator("visible=true").last.wait_for(state="hidden", timeout=30_000)
                                         if self.page.locator('//div[@class="antHcbm_routesDashboardCardsHcbmCards_down"][text()="关闭"]').locator("visible=true").or_(self.page.locator(".driver-close-btn").filter(has_text="关闭").locator("visible-true")).count():
                                             self.page.locator('//div[@class="antHcbm_routesDashboardCardsHcbmCards_down"][text()="关闭"]').locator("visible=true").or_(self.page.locator(".driver-close-btn").filter(has_text="关闭").locator("visible-true")).last.evaluate("node => node.click()")
                                         self.page.evaluate('''() => {
@@ -1050,24 +838,3 @@ class Locator(_Locator):
 
 
 # mapping.register(LocatorImpl, Locator)
-
-
-# @pytest.hookimpl(trylast=True)
-# def pytest_sessionfinish(session):
-#     allure_report_auto_open_config = session.config.getoption("--allure_report_auto_open")
-#     if session.config.getoption("--allure_report_auto_open") != "off":
-#         if sys.platform != "linux":
-#             import subprocess
-#             allure_report_dir = allure_report_auto_open_config
-#             # 尝试关闭可能已经在运行的 Allure 服务
-#             try:
-#                 if sys.platform == 'darwin':  # macOS
-#                     subprocess.call("pkill -f 'allure'", shell=True)
-#                 elif sys.platform == 'win32':  # Windows
-#                     command = "taskkill /F /IM allure.exe /T"
-#                     subprocess.call(command, shell=True)
-#             except Exception as e:
-#                 print(e)
-#             allure_command = f'allure serve {allure_report_dir}'
-#             subprocess.Popen(allure_command, shell=True)
-
