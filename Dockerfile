@@ -14,8 +14,8 @@ RUN jlink \
          --output /javaruntime
 
 # 第二阶段：使用 Jenkins inbound-agent 作为中间层
-# https://github.com/jenkinsci/docker-agent/blob/master/debian/Dockerfile
-#FROM jenkins/inbound-agent:3309.v27b_9314fd1a_4-3 AS inbound-agent
+ https://github.com/jenkinsci/docker-agent/blob/master/debian/Dockerfile
+FROM jenkins/inbound-agent:3309.v27b_9314fd1a_4-3 AS inbound-agent
 
 # 第三阶段：基础镜像是 Playwright Python 运行环境
 FROM mcr.microsoft.com/playwright/python:v1.52.0-jammy
@@ -87,6 +87,7 @@ RUN pip3 install --no-cache-dir -r /root/requirements.txt -i  https://pypi.tuna.
 # 添加这一行：复制当前项目到用户主目录
 COPY . /root/project
 
+CMD ["pytest", "testcases"]
 
 # 复制自定义的 Playwright 用户实现到 Locust 插件目录
 #COPY locust_plugins/users/playwright.py /usr/local/lib/python3.10/dist-packages/locust_plugins/users/playwright.py

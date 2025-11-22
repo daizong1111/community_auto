@@ -66,8 +66,9 @@ def test_init(base_url):
     global_map = GlobalMap()
     global_map.set("baseurl", base_url)
     # env = base_url
-    if base_url == "http://114.96.83.242:8087":
-        env = "test"
+    # if base_url == "http://114.96.83.242:8087":
+    #     env = "test"
+    env = "test"
     # env = re.search("(http://)(.*)(/login)", base_url).group(2)
     global_map.set("env", env)
 
@@ -320,7 +321,7 @@ def new_context(
             print("start with ws-endpoint context")
 
             # ws并发轮询处理函数:
-            def wsendpoint_load() -> BrowserContext | None:
+            def wsendpoint_load() -> Optional[BrowserContext]:
                 while True:
                     # 等待有可用空闲连接:
                     with open(get_path(".temp/ws-endpoint.json"), "r") as ws_file:
