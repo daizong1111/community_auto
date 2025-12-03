@@ -1,5 +1,12 @@
 pipeline {
-    agent any
+    //agent any
+    agent {
+        docker {
+            image 'docker:24'
+            args '-v /var/run/docker.sock:/var/run/docker.sock -u root'
+        }
+    }
+    
     environment {
         gitUsername = 'daizong1111'
         repositoryName = 'community_auto'
