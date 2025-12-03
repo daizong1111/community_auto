@@ -1,11 +1,11 @@
 pipeline {
     //agent any
-    agent {
-        docker {
-            image 'docker:24'
-            args '-v /var/run/docker.sock:/var/run/docker.sock -u root'
-        }
-    }
+    // agent {
+    //     docker {
+    //         image 'docker:24'
+    //         args '-v /var/run/docker.sock:/var/run/docker.sock -u root'
+    //     }
+    // }
     
     environment {
         gitUsername = 'daizong1111'
@@ -16,6 +16,16 @@ pipeline {
     }
     stages {
         stage('前置工作') {
+            steps {
+                sh '''
+                // apk add --no-cache docker  # Alpine Linux
+                # 或
+                apt-get update && apt-get install -y docker.io  # Debian/Ubuntu
+                # 或
+                // yum install -y docker      # CentOS/RHEL（较旧）
+                '''
+    sh 'docker images'
+}
             steps {
                 script {
                     echo '工作目录'
