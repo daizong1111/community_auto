@@ -27,9 +27,9 @@ pipeline {
 
                     echo '拉取项目'
                     if (isUnix()) {
-                        sh "git clone https://github.com:${env.gitUsername}/${env.repositoryName}.git"
+                        sh "git clone https://github.com/${env.gitUsername}/${env.repositoryName}.git"
                     } else {
-                        bat "git clone https://github.com:${env.gitUsername}/${env.repositoryName}.git"
+                        bat "git clone https://github.com/${env.gitUsername}/${env.repositoryName}.git"
                     }
 
                     echo '查看当前 Docker 状态'
