@@ -24,9 +24,8 @@ pipeline {
                 # 或
                 // yum install -y docker      # CentOS/RHEL（较旧）
                 '''
-    sh 'docker images'
-}
-            steps {
+                sh 'docker images'
+                
                 script {
                     echo '工作目录'
                     if (isUnix()) {
