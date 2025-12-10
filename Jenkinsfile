@@ -1,11 +1,18 @@
 pipeline {
-    agent any
+    // agent any
     // agent {
     //     docker {
     //         image 'docker:24'
     //         args '-v /var/run/docker.sock:/var/run/docker.sock -u root'
     //     }
     // }
+
+    agent {
+        docker {
+            image 'docker:dind'
+            args '-v /var/jenkins_home:/var/jenkins_home --privileged'
+        }
+    }
     
     environment {
         gitUsername = 'daizong1111'
