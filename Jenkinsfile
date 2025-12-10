@@ -6,13 +6,8 @@ pipeline {
     //         args '-v /var/run/docker.sock:/var/run/docker.sock -u root'
     //     }
     // }
-
-    agent {
-        docker {
-            image 'docker:dind'
-            args '-v /var/jenkins_home:/var/jenkins_home --privileged'
-        }
-    }
+    agent { label 'docker-node' }
+    
     
     environment {
         gitUsername = 'daizong1111'
