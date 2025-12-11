@@ -1,12 +1,12 @@
 pipeline {
-    // agent any
+    agent any
     // agent {
     //     docker {
     //         image 'docker:24'
     //         args '-v /var/run/docker.sock:/var/run/docker.sock -u root'
     //     }
     // }
-    agent { label 'docker-node' }
+    //agent { label 'docker-node' }
     
     
     environment {
