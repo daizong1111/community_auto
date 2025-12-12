@@ -11,7 +11,7 @@ packaging==24.0
 playwright
 pluggy==1.5.0
 pyee
-greenlet
+greenlet #
 pytest==8.2.1
 pytest-base-url==2.1.0
 pytest-playwright==0.5.0
