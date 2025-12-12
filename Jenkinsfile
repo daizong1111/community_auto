@@ -12,67 +12,78 @@ pipeline {
         /* 自定义容器名称 */
         containerName = 'community_ui_auto_test'
     }
+    options {
+        // 可选：设置超时防止卡死
+        timeout(time: 30, unit: 'MINUTES')
+    }
     stages {
         stage('前置工作') {
             steps {
                 echo '工作目录'
-                bat 'pwd' // 在Git Bash环境下可用，否则用 'echo %cd%'
+                bat 'cd'
 
                 echo '清理历史文件'
-                // 使用rd /s /q命令递归删除目录，相当于Linux的rm -rf
                 bat 'if exist "%WORKSPACE%\\%repositoryName%" rd /s /q "%WORKSPACE%\\%repositoryName%"'
 
                 echo '拉取项目'
-                // 注意：Windows下git clone命令需要你的SSH密钥已配置好
                 bat 'git clone git@github.com:%gitUsername%/%repositoryName%.git'
 
-                echo '查看镜像'
+                echo '查看现有镜像'
                 bat 'docker images'
 
-                echo '查看容器'
+                echo '查看现有容器'
                 bat 'docker ps -a'
 
-                echo '构建镜像'
-                // 使用bat的&&连接符，确保在正确的目录下执行构建
-                bat 'cd %repositoryName% && docker build -t %imageName%:%imageTag% .'
+                echo '构建 Docker 镜像（详细日志）'
+                // 添加 --progress=plain 以获得清晰、非 ANSI 的构建日志（推荐 Docker >=20.10）
+                // 如果你的 Docker 版本较低，可去掉 --progress=plain
+                bat 'cd "%WORKSPACE%\\%repositoryName%" && docker build --progress=plain -t %imageName%:%imageTag% .'
             }
         }
         stage('执行测试') {
             steps {
-                echo '运行容器'
-                // Windows下变量引用方式为%var%
-                bat 'docker run -i --name=%containerName% %imageName%:%imageTag%'
+                echo '运行测试容器（确保容器会自动退出）'
+                // 假设你的容器启动后执行测试并退出（非交互式长时间运行）
+                // 如果容器不退出，Jenkins 会卡住！
+                bat 'docker run --rm --name=%containerName% %imageName%:%imageTag%'
+                // 使用 --rm 可自动删除容器，简化后续清理（推荐！）
             }
         }
         stage('后置工作') {
             steps {
-                echo '保存报告'
-                // Windows路径使用反斜杠，且变量用%%包裹
-                bat 'docker cp %containerName%:/code/reports "%WORKSPACE%\\%repositoryName%\\reports"'
+                script {
+                    // 检查容器是否还存在（如果用了 --rm，这步可能不需要）
+                    def containerExists = sh(
+                        script: 'docker ps -a --filter "name=^/%containerName%\$" --format "{{.Names}}" | findstr /R "^%containerName%\$"',
+                        returnStdout: true
+                    ).trim()
+                    if (containerExists) {
+                        echo '保存测试报告'
+                        bat 'docker cp %containerName%:/code/reports "%WORKSPACE%\\%repositoryName%\\reports"'
+                    } else {
+                        echo '容器已自动清理（可能使用了 --rm），跳过报告复制'
+                    }
+                }
 
-                echo '删除容器'
-                bat 'docker rm %containerName%'
+                echo '强制清理容器（如果存在）'
+                bat 'docker rm -f %containerName% 2>nul || exit /b 0'
 
                 echo '删除镜像'
-                // 为了防止镜像名中包含特殊字符，整个路径用双引号括起来
-                bat 'docker rmi "%imageName%:%imageTag%"'
+                bat 'docker rmi -f "%imageName%:%imageTag%" 2>nul || exit /b 0'
             }
         }
     }
     post {
-        success {
-            echo '执行成功'
-            echo '查看镜像'
+        always {
+            echo 'Pipeline 结束：显示当前 Docker 状态'
             bat 'docker images'
-            echo '查看容器'
             bat 'docker ps -a'
         }
+        success {
+            echo '✅ 执行成功！'
+        }
         failure {
-            echo '执行失败'
-            echo '查看镜像'
-            bat 'docker images'
-            echo '查看容器'
-            bat 'docker ps -a'
+            echo '❌ 执行失败！'
         }
     }
 }

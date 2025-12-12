@@ -904,10 +904,10 @@ class PageObject:
                 # if 表单项中包含操作元素的最上级div.locator(">.el-input, .el-textarea:not(.el-select):not(.el-cascader):not(.el-date-editor--date):not(.el-date-editor--datetime):not(.el-date-editor--datetimerange):not(.el-upload)").count():
                 if flag_定位器:
                     self.表单_文本框填写(定位器=表单项中包含操作元素的最上级div, 需要填写的文本=内容, 表单最上层定位=处理后的表单最上层定位,
-                                         timeout=8000)
+                                         )
                 else:
                     self.表单_文本框填写(表单项名称=表单项, 需要填写的文本=内容, 表单最上层定位=处理后的表单最上层定位,
-                                         timeout=8000)
+                                         )
             elif 表单项中包含操作元素的最上级div.locator(".el-select").count():
                 if flag_定位器:
                     self.表单_下拉框选择(定位器=表单项中包含操作元素的最上级div, 需要选择的项=内容, 表单最上层定位=处理后的表单最上层定位,

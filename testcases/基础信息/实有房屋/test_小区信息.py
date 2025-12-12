@@ -49,7 +49,8 @@ def test_小区信息_新增修改删除(new_context):
         expect(my_page_测试员.小区信息.table.table_body.locator("tr").filter(has_text=小区名称).get_by_text("商业")).to_be_visible()
         expect(my_page_测试员.小区信息.table.table_body.locator("tr").filter(has_text=小区名称).get_by_text("物管小区")).to_be_visible()
     with 测试步骤("修改一个小区"):
-        my_page_测试员.小区信息.table.点击表格中某行按钮(loc_行or行号or关键字=1, 按钮名="编辑")
+        行号_待删除 = 0
+        my_page_测试员.小区信息.table.点击表格中某行按钮(loc_行or行号or关键字=行号_待删除, 按钮名="编辑")
         timestamp = datetime.now().strftime("%H:%M:%S")
         小区名称_修改后 = f"自动化创建_{timestamp}"
         唯一的坐标集 = generate_unique_coordinates()
@@ -78,7 +79,7 @@ def test_小区信息_新增修改删除(new_context):
             if time.time() - start > 30:
                 break
             try:
-                my_page_测试员.小区信息.table.点击表格中某行按钮(loc_行or行号or关键字=0, 按钮名="删除")
+                my_page_测试员.小区信息.table.点击表格中某行按钮(loc_行or行号or关键字=行号_待删除, 按钮名="删除")
                 my_page_测试员.小区信息.click_button("确定")
                 expect(my_page_测试员.小区信息.page.get_by_text("删除成功")).to_be_visible()
             except:
