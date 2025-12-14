@@ -26,7 +26,7 @@ pipeline {
                 bat 'if exist "%WORKSPACE%\\%repositoryName%" rd /s /q "%WORKSPACE%\\%repositoryName%"'
 
                 echo '拉取项目'
-                bat 'git clone git@github.com:%gitUsername%/%repositoryName%.git'
+                bat 'git clone https://github.com/%gitUsername%/%repositoryName%.git'
 
                 echo '查看现有镜像'
                 bat 'docker images'
